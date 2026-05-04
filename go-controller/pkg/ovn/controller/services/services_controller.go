@@ -804,7 +804,16 @@ func (c *Controller) cleanupUDNEnabledServiceRoute(key string) error {
 			}
 		}
 	} else {
-		if ops, err = libovsdbops.DeleteLogicalRouterStaticRoutesWithPredicateOps(c.nbClient, ops, c.netInfo.GetNetworkScopedClusterRouterName(), delPredicate); err != nil {
+		routerName := c.netInfo.GetNetworkScopedClusterRouterName()
+		if ops, err = libovsdbops.DeleteLogicalRouterStaticRoutesWithPredicateOps(c.nbClient, ops, routerName, delPredicate); err != nil {
+			return err
+		}
+		policyPredicate := func(p *nbdb.LogicalRouterPolicy) bool {
+			return p.ExternalIDs[types.NetworkExternalID] == c.netInfo.GetNetworkName() &&
+				p.ExternalIDs[types.TopologyExternalID] == c.netInfo.TopologyType() &&
+				p.ExternalIDs[types.UDNEnabledServiceExternalID] == key
+		}
+		if ops, err = libovsdbops.DeleteLogicalRouterPolicyWithPredicateOps(c.nbClient, ops, routerName, policyPredicate); err != nil {
 			return err
 		}
 	}
@@ -812,7 +821,60 @@ func (c *Controller) cleanupUDNEnabledServiceRoute(key string) error {
 	return err
 }
 
+// configureUDNEnabledServiceRoute programs the UDN cluster router to steer ClusterIP
+// traffic for UDN-enabled default services (e.g. kube-dns) toward management ports.
+// On shared-cluster-router topologies (Layer3, Layer2 with transit router), per-node
+// LR policies are used so that each node's traffic is directed exclusively to its own
+// management port, avoiding ECMP scatter. Layer2 without a transit router uses per-node
+// gateway routers and static routes (no shared router, no ECMP possible).
 func (c *Controller) configureUDNEnabledServiceRoute(service *corev1.Service) error {
+	if !(c.netInfo.TopologyType() == types.Layer2Topology && !globalconfig.Layer2UsesTransitRouter) {
+		return c.configureUDNEnabledServicePolicy(service)
+	}
+	return c.configureUDNEnabledServiceStaticRoute(service)
+}
+
+func (c *Controller) configureUDNEnabledServicePolicy(service *corev1.Service) error {
+	klog.Infof("Configuring UDN enabled service policy for service %s/%s in network: %s", service.Namespace, service.Name, c.netInfo.GetNetworkName())
+
+	extIDs := map[string]string{
+		types.NetworkExternalID:           c.netInfo.GetNetworkName(),
+		types.TopologyExternalID:          c.netInfo.TopologyType(),
+		types.UDNEnabledServiceExternalID: ktypes.NamespacedName{Namespace: service.Namespace, Name: service.Name}.String(),
+	}
+	ipFamily := "ip4"
+	if utilnet.IsIPv6String(service.Spec.ClusterIP) {
+		ipFamily = "ip6"
+	}
+	routerName := c.netInfo.GetNetworkScopedClusterRouterName()
+	var ops []ovsdb.Operation
+	for _, nodeInfo := range c.nodeInfos {
+		mgmtIP, err := util.MatchFirstIPFamily(utilnet.IsIPv6String(service.Spec.ClusterIP), nodeInfo.mgmtIPs)
+		if err != nil {
+			return err
+		}
+		inport := c.netInfo.GetNetworkScopedRouterToSwitchPortName(nodeInfo.name)
+		policy := nbdb.LogicalRouterPolicy{
+			Priority:    types.UDNEnabledServicePolicyPriority,
+			Match:       fmt.Sprintf("inport == %q && %s.dst == %s", inport, ipFamily, service.Spec.ClusterIP),
+			Action:      nbdb.LogicalRouterPolicyActionReroute,
+			Nexthops:    []string{mgmtIP.String()},
+			ExternalIDs: extIDs,
+		}
+		ops, err = libovsdbops.CreateOrUpdateLogicalRouterPolicyWithPredicateOps(c.nbClient, ops, routerName, &policy,
+			func(item *nbdb.LogicalRouterPolicy) bool {
+				return item.ExternalIDs[types.UDNEnabledServiceExternalID] == extIDs[types.UDNEnabledServiceExternalID] &&
+					item.Match == policy.Match
+			})
+		if err != nil {
+			return err
+		}
+	}
+	_, err := libovsdbops.TransactAndCheck(c.nbClient, ops)
+	return err
+}
+
+func (c *Controller) configureUDNEnabledServiceStaticRoute(service *corev1.Service) error {
 	klog.Infof("Configuring UDN enabled service route for service %s/%s in network: %s", service.Namespace, service.Name, c.netInfo.GetNetworkName())
 
 	extIDs := map[string]string{

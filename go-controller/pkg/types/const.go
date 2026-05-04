@@ -129,6 +129,7 @@ const (
 	NodeSubnetPolicyPriority              = "1004"
 	InterNodePolicyPriority               = "1003"
 	UDNHostCIDRPolicyPriority             = "99"
+	UDNEnabledServicePolicyPriority       = 400
 	HybridOverlaySubnetPriority           = 1002
 	HybridOverlayReroutePriority          = 501
 	DefaultNoRereoutePriority             = 102
