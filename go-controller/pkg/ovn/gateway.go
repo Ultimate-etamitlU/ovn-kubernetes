@@ -1,6 +1,7 @@
 package ovn
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net"
@@ -959,8 +960,17 @@ func (gw *GatewayManager) addExternalSwitch(prefix, interfaceID, gatewayRouter, 
 	for _, ip := range ipAddresses {
 		externalRouterPortNetworks = append(externalRouterPortNetworks, ip.String())
 	}
+	// For UDNs, generate a unique MAC per network to prevent ARP broadcast
+	// fan-out across all UDN ext switches (OCPBUGS-85627). The MAC is
+	// deterministic (hash of network+router name) so it's stable across restarts.
+	portMAC := macAddress
+	if gw.netInfo.IsUserDefinedNetwork() {
+		h := sha256.Sum256([]byte(gw.netInfo.GetNetworkName() + "|" + gatewayRouter))
+		portMAC = fmt.Sprintf("0a:58:%02x:%02x:%02x:%02x", h[0], h[1], h[2], h[3])
+	}
+
 	externalLogicalRouterPort := nbdb.LogicalRouterPort{
-		MAC: macAddress,
+		MAC: portMAC,
 		ExternalIDs: map[string]string{
 			"gateway-physical-ip": "yes",
 		},
@@ -1030,7 +1040,7 @@ func (gw *GatewayManager) addExternalSwitch(prefix, interfaceID, gatewayRouter, 
 			// LB VIPs are not sent, thereby preventing GARP overload.
 			"exclude-lb-vips-from-garp": "true",
 		},
-		Addresses: []string{macAddress},
+		Addresses: []string{portMAC},
 	}
 
 	if gw.netInfo.IsUserDefinedNetwork() {
