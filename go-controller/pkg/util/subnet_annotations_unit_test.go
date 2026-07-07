@@ -380,6 +380,69 @@ func TestNodeSubnetAnnotationChangedForNetwork(t *testing.T) {
 			netName: "default",
 			result:  false,
 		},
+		{
+			desc: "true: old annotation is truncated JSON",
+			oldNode: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testNode",
+					Annotations: map[string]string{
+						"k8s.ovn.org/node-subnets": `{"default":["10.244`,
+					},
+				},
+			},
+			newNode: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testNode",
+					Annotations: map[string]string{
+						"k8s.ovn.org/node-subnets": `{"default":["10.244.0.0/24"]}`,
+					},
+				},
+			},
+			netName: "default",
+			result:  true,
+		},
+		{
+			desc: "true: new annotation is truncated JSON",
+			oldNode: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testNode",
+					Annotations: map[string]string{
+						"k8s.ovn.org/node-subnets": `{"default":["10.244.0.0/24"]}`,
+					},
+				},
+			},
+			newNode: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testNode",
+					Annotations: map[string]string{
+						"k8s.ovn.org/node-subnets": `{"default":["10.244`,
+					},
+				},
+			},
+			netName: "default",
+			result:  true,
+		},
+		{
+			desc: "true: old annotation is malformed JSON",
+			oldNode: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testNode",
+					Annotations: map[string]string{
+						"k8s.ovn.org/node-subnets": `{"default":invalid}`,
+					},
+				},
+			},
+			newNode: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testNode",
+					Annotations: map[string]string{
+						"k8s.ovn.org/node-subnets": `{"default":["10.244.0.0/24"]}`,
+					},
+				},
+			},
+			netName: "default",
+			result:  true,
+		},
 	}
 	for i, tc := range tests {
 		t.Run(fmt.Sprintf("%d:%s", i, tc.desc), func(t *testing.T) {

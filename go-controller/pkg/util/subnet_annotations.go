@@ -157,12 +157,13 @@ func NodeSubnetAnnotationChangedForNetwork(oldNode, newNode *corev1.Node, netNam
 
 	var oldSubnets, newSubnets map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(oldRaw), &oldSubnets); err != nil {
-		klog.Errorf("Failed to unmarshal old node %s annotation: %v", oldNode.Name, err)
-		return false
+		klog.Warningf("Failed to unmarshal old node %s annotation; forcing reconciliation: %v", oldNode.Name, err)
+		// Conservatively assume changed so the controller reconciles using the latest valid state.
+		return true
 	}
 	if err := json.Unmarshal([]byte(newRaw), &newSubnets); err != nil {
-		klog.Errorf("Failed to unmarshal new node %s annotation: %v", newNode.Name, err)
-		return false
+		klog.Warningf("Failed to unmarshal new node %s annotation; forcing reconciliation: %v", newNode.Name, err)
+		return true
 	}
 	return !bytes.Equal(oldSubnets[netName], newSubnets[netName])
 }

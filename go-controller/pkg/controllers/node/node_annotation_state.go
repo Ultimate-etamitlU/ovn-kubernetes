@@ -89,13 +89,16 @@ func NodeSubnetAnnotationChangedForNetworkWithState(oldState, newState *NodeAnno
 	}
 	if oldState.subnetsErr != nil {
 		if !util.IsAnnotationNotSetError(oldState.subnetsErr) {
-			klog.Errorf("Failed to parse old node %s annotation: %v", oldState.nodeName, oldState.subnetsErr)
+			klog.Warningf("Failed to parse old node %s annotation; forcing reconciliation: %v", oldState.nodeName, oldState.subnetsErr)
+			// Conservatively assume changed so the controller reconciles using the latest valid state.
+			return true
 		}
 		return false
 	}
 	if newState.subnetsErr != nil {
 		if !util.IsAnnotationNotSetError(newState.subnetsErr) {
-			klog.Errorf("Failed to parse new node %s annotation: %v", newState.nodeName, newState.subnetsErr)
+			klog.Warningf("Failed to parse new node %s annotation; forcing reconciliation: %v", newState.nodeName, newState.subnetsErr)
+			return true
 		}
 		return false
 	}
