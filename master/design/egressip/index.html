@@ -5,31 +5,27 @@
       
       
       
-        <link rel="canonical" href="https://www.ovn.org/ovn-kubernetes/master/features/user-defined-networks/uplinks/">
+        <link rel="canonical" href="https://www.ovn.org/ovn-kubernetes/master/design/egressip/">
       
       
-        <link rel="prev" href="../user-defined-networks/">
-      
-      
-        <link rel="next" href="../cluster-network-connect/">
       
       
         
       
       
-      <link rel="icon" href="../../../images/ovn-inside-k8s.png">
+      <link rel="icon" href="../../images/ovn-inside-k8s.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Uplinks for UserDefinedNetworks - OVN-Kubernetes</title>
+        <title>EgressIP - OVN-Kubernetes</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -48,15 +44,15 @@
       
     
     
-      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
     
     
-  <link href="../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
             html.glightbox-open { overflow: initial; height: 100%; }
             .gslide-title { margin-top: 0px; user-select: text; }
             .gslide-desc { color: #666; user-select: text; }
@@ -85,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#uplinks-for-user-defined-networks" class="md-skip">
+        <a href="#egressip" class="md-skip">
           Skip to content
         </a>
       
@@ -105,9 +101,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="OVN-Kubernetes" class="md-header__button md-logo" aria-label="OVN-Kubernetes" data-md-component="logo">
+    <a href="../.." title="OVN-Kubernetes" class="md-header__button md-logo" aria-label="OVN-Kubernetes" data-md-component="logo">
       
-  <img src="../../../images/ovn-inside-k8s.png" alt="logo">
+  <img src="../../images/ovn-inside-k8s.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -124,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Uplinks for UserDefinedNetworks
+              EgressIP
             
           </span>
         </div>
@@ -231,7 +227,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../.." class="md-tabs__link">
+        <a href="../.." class="md-tabs__link">
           
   
   
@@ -253,7 +249,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../getting-started/" class="md-tabs__link">
+        <a href="../../getting-started/" class="md-tabs__link">
           
   
   
@@ -275,7 +271,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../developer-guide/" class="md-tabs__link">
+        <a href="../../developer-guide/" class="md-tabs__link">
           
   
   
@@ -297,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../api-reference/" class="md-tabs__link">
+        <a href="../../api-reference/" class="md-tabs__link">
           
   
   
@@ -315,13 +311,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../features/" class="md-tabs__link">
           
   
   
@@ -343,7 +337,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../troubleshooting/" class="md-tabs__link">
+        <a href="../../troubleshooting/" class="md-tabs__link">
           
   
   
@@ -365,7 +359,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../observability/" class="md-tabs__link">
+        <a href="../../observability/" class="md-tabs__link">
           
   
   
@@ -387,7 +381,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../okeps/" class="md-tabs__link">
+        <a href="../../okeps/" class="md-tabs__link">
           
   
   
@@ -409,7 +403,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../blog/" class="md-tabs__link">
+        <a href="../../blog/" class="md-tabs__link">
           
   
   
@@ -451,9 +445,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="OVN-Kubernetes" class="md-nav__button md-logo" aria-label="OVN-Kubernetes" data-md-component="logo">
+    <a href="../.." title="OVN-Kubernetes" class="md-nav__button md-logo" aria-label="OVN-Kubernetes" data-md-component="logo">
       
-  <img src="../../../images/ovn-inside-k8s.png" alt="logo">
+  <img src="../../images/ovn-inside-k8s.png" alt="logo">
 
     </a>
     OVN-Kubernetes
@@ -527,7 +521,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../.." class="md-nav__link ">
+            <a href="../.." class="md-nav__link ">
               
   
   
@@ -571,7 +565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -599,7 +593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/topology/" class="md-nav__link">
+      <a href="../topology/" class="md-nav__link">
         
   
   
@@ -627,7 +621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/gateway-modes/" class="md-nav__link">
+      <a href="../gateway-modes/" class="md-nav__link">
         
   
   
@@ -655,7 +649,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/traffic-flows/" class="md-nav__link">
+      <a href="../traffic-flows/" class="md-nav__link">
         
   
   
@@ -683,7 +677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/pod-creation-workflow/" class="md-nav__link">
+      <a href="../pod-creation-workflow/" class="md-nav__link">
         
   
   
@@ -711,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/service-creation-workflow/" class="md-nav__link">
+      <a href="../service-creation-workflow/" class="md-nav__link">
         
   
   
@@ -739,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/service-traffic-policy/" class="md-nav__link">
+      <a href="../service-traffic-policy/" class="md-nav__link">
         
   
   
@@ -767,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/host-to-node-port-hairpin-trafficflow/" class="md-nav__link">
+      <a href="../host-to-node-port-hairpin-trafficflow/" class="md-nav__link">
         
   
   
@@ -795,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/external-ip-and-loadbalancer-ingress/" class="md-nav__link">
+      <a href="../external-ip-and-loadbalancer-ingress/" class="md-nav__link">
         
   
   
@@ -823,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/ovn-kubernetes-subnets/" class="md-nav__link">
+      <a href="../ovn-kubernetes-subnets/" class="md-nav__link">
         
   
   
@@ -851,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/bridge-flows/" class="md-nav__link">
+      <a href="../bridge-flows/" class="md-nav__link">
         
   
   
@@ -879,7 +873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/masquerade-ips/" class="md-nav__link">
+      <a href="../masquerade-ips/" class="md-nav__link">
         
   
   
@@ -907,7 +901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../live-migration/" class="md-nav__link">
+      <a href="../../features/live-migration/" class="md-nav__link">
         
   
   
@@ -983,7 +977,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../getting-started/" class="md-nav__link ">
+            <a href="../../getting-started/" class="md-nav__link ">
               
   
   
@@ -1027,7 +1021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/launching-ovn-kubernetes-on-kind/" class="md-nav__link">
+      <a href="../../installation/launching-ovn-kubernetes-on-kind/" class="md-nav__link">
         
   
   
@@ -1055,7 +1049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/launching-ovn-kubernetes-with-helm/" class="md-nav__link">
+      <a href="../../installation/launching-ovn-kubernetes-with-helm/" class="md-nav__link">
         
   
   
@@ -1083,7 +1077,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/launching-ovn-kubernetes-with-dpu/" class="md-nav__link">
+      <a href="../../installation/launching-ovn-kubernetes-with-dpu/" class="md-nav__link">
         
   
   
@@ -1111,7 +1105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/INSTALL.KUBEADM/" class="md-nav__link">
+      <a href="../../installation/INSTALL.KUBEADM/" class="md-nav__link">
         
   
   
@@ -1139,7 +1133,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/configuration/" class="md-nav__link">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -1167,7 +1161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/" class="md-nav__link">
+      <a href="../../features/requirements/" class="md-nav__link">
         
   
   
@@ -1195,7 +1189,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/cli-guide/" class="md-nav__link">
+      <a href="../../getting-started/cli-guide/" class="md-nav__link">
         
   
   
@@ -1223,7 +1217,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/example-pod-creation/" class="md-nav__link">
+      <a href="../../getting-started/example-pod-creation/" class="md-nav__link">
         
   
   
@@ -1251,7 +1245,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/example-service-creation/" class="md-nav__link">
+      <a href="../../getting-started/example-service-creation/" class="md-nav__link">
         
   
   
@@ -1279,7 +1273,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/building-ovn-kubernetes/" class="md-nav__link">
+      <a href="../../getting-started/building-ovn-kubernetes/" class="md-nav__link">
         
   
   
@@ -1359,7 +1353,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../developer-guide/" class="md-nav__link ">
+            <a href="../../developer-guide/" class="md-nav__link ">
               
   
   
@@ -1403,7 +1397,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../governance/CONTRIBUTING/" class="md-nav__link">
+      <a href="../../governance/CONTRIBUTING/" class="md-nav__link">
         
   
   
@@ -1431,7 +1425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../governance/GOVERNANCE/" class="md-nav__link">
+      <a href="../../governance/GOVERNANCE/" class="md-nav__link">
         
   
   
@@ -1459,7 +1453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../governance/REVIEWING/" class="md-nav__link">
+      <a href="../../governance/REVIEWING/" class="md-nav__link">
         
   
   
@@ -1487,7 +1481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/areas/" class="md-nav__link">
+      <a href="../../developer-guide/areas/" class="md-nav__link">
         
   
   
@@ -1515,7 +1509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/developer/" class="md-nav__link">
+      <a href="../../developer-guide/developer/" class="md-nav__link">
         
   
   
@@ -1543,7 +1537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/image-build/" class="md-nav__link">
+      <a href="../../developer-guide/image-build/" class="md-nav__link">
         
   
   
@@ -1571,7 +1565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/documentation/" class="md-nav__link">
+      <a href="../../developer-guide/documentation/" class="md-nav__link">
         
   
   
@@ -1599,7 +1593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/local_testing_guide/" class="md-nav__link">
+      <a href="../../developer-guide/local_testing_guide/" class="md-nav__link">
         
   
   
@@ -1627,7 +1621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../ci/ci/" class="md-nav__link">
+      <a href="../../ci/ci/" class="md-nav__link">
         
   
   
@@ -1655,7 +1649,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/debugging/" class="md-nav__link">
+      <a href="../../developer-guide/debugging/" class="md-nav__link">
         
   
   
@@ -1683,7 +1677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/release/" class="md-nav__link">
+      <a href="../../developer-guide/release/" class="md-nav__link">
         
   
   
@@ -1711,7 +1705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/maintenance/" class="md-nav__link">
+      <a href="../../developer-guide/maintenance/" class="md-nav__link">
         
   
   
@@ -1787,7 +1781,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../api-reference/" class="md-nav__link ">
+            <a href="../../api-reference/" class="md-nav__link ">
               
   
   
@@ -1831,7 +1825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/introduction/" class="md-nav__link">
+      <a href="../../api-reference/introduction/" class="md-nav__link">
         
   
   
@@ -1859,7 +1853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/egress-ip-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/egress-ip-api-spec/" class="md-nav__link">
         
   
   
@@ -1887,7 +1881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/egress-service-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/egress-service-api-spec/" class="md-nav__link">
         
   
   
@@ -1915,7 +1909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/egress-qos-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/egress-qos-api-spec/" class="md-nav__link">
         
   
   
@@ -1943,7 +1937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/egress-firewall-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/egress-firewall-api-spec/" class="md-nav__link">
         
   
   
@@ -1971,7 +1965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/admin-epbr-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/admin-epbr-api-spec/" class="md-nav__link">
         
   
   
@@ -1999,7 +1993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/userdefinednetwork-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/userdefinednetwork-api-spec/" class="md-nav__link">
         
   
   
@@ -2027,7 +2021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/routeadvertisements-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/routeadvertisements-api-spec/" class="md-nav__link">
         
   
   
@@ -2055,7 +2049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/clusternetworkconnect-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/clusternetworkconnect-api-spec/" class="md-nav__link">
         
   
   
@@ -2083,7 +2077,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-reference/vtep-api-spec/" class="md-nav__link">
+      <a href="../../api-reference/vtep-api-spec/" class="md-nav__link">
         
   
   
@@ -2115,8 +2109,6 @@
       
   
   
-    
-  
   
   
     
@@ -2154,21 +2146,18 @@
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked="">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5">
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../" class="md-nav__link ">
+            <a href="../../features/" class="md-nav__link ">
               
   
   
@@ -2186,13 +2175,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2209,8 +2198,6 @@
                 
   
   
-    
-  
   
   
     
@@ -2235,15 +2222,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked="">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2">
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../features/user-defined-networks/" class="md-nav__link ">
               
   
   
@@ -2267,7 +2254,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2287,7 +2274,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-defined-networks/" class="md-nav__link">
+      <a href="../../features/user-defined-networks/user-defined-networks/" class="md-nav__link">
         
   
   
@@ -2312,37 +2299,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Uplinks for UserDefinedNetworks
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../features/user-defined-networks/uplinks/" class="md-nav__link">
         
   
   
@@ -2358,158 +2318,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
-      
-        <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Introduction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#enabling-the-feature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling the Feature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported Scope
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#regular-node-deployments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Regular Node Deployments
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dpu-deployments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DPU Deployments
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#uplinkstate-and-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UplinkState and Conditions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dynamic-udn" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dynamic UDN
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#route-advertisements-and-vrfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Route Advertisements and VRFs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Services
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2522,7 +2330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cluster-network-connect/" class="md-nav__link">
+      <a href="../../features/user-defined-networks/cluster-network-connect/" class="md-nav__link">
         
   
   
@@ -2550,7 +2358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-udn/" class="md-nav__link">
+      <a href="../../features/user-defined-networks/dynamic-udn/" class="md-nav__link">
         
   
   
@@ -2613,7 +2421,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../network-security-controls/" class="md-nav__link ">
+            <a href="../../features/network-security-controls/" class="md-nav__link ">
               
   
   
@@ -2657,7 +2465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network-security-controls/admin-network-policy/" class="md-nav__link">
+      <a href="../../features/network-security-controls/admin-network-policy/" class="md-nav__link">
         
   
   
@@ -2685,7 +2493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network-security-controls/network-policy/" class="md-nav__link">
+      <a href="../../features/network-security-controls/network-policy/" class="md-nav__link">
         
   
   
@@ -2713,7 +2521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network-security-controls/egress-firewall/" class="md-nav__link">
+      <a href="../../features/network-security-controls/egress-firewall/" class="md-nav__link">
         
   
   
@@ -2778,7 +2586,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../cluster-egress-controls/" class="md-nav__link ">
+            <a href="../../features/cluster-egress-controls/" class="md-nav__link ">
               
   
   
@@ -2822,7 +2630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster-egress-controls/egress-ip/" class="md-nav__link">
+      <a href="../../features/cluster-egress-controls/egress-ip/" class="md-nav__link">
         
   
   
@@ -2850,7 +2658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster-egress-controls/egress-service/" class="md-nav__link">
+      <a href="../../features/cluster-egress-controls/egress-service/" class="md-nav__link">
         
   
   
@@ -2878,7 +2686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster-egress-controls/egress-qos/" class="md-nav__link">
+      <a href="../../features/cluster-egress-controls/egress-qos/" class="md-nav__link">
         
   
   
@@ -2906,7 +2714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster-egress-controls/egress-gateway/" class="md-nav__link">
+      <a href="../../features/cluster-egress-controls/egress-gateway/" class="md-nav__link">
         
   
   
@@ -2965,7 +2773,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../infrastructure-security-controls/" class="md-nav__link ">
+            <a href="../../features/infrastructure-security-controls/" class="md-nav__link ">
               
   
   
@@ -3009,7 +2817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure-security-controls/node-identity/" class="md-nav__link">
+      <a href="../../features/infrastructure-security-controls/node-identity/" class="md-nav__link">
         
   
   
@@ -3072,7 +2880,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../multiple-networks/" class="md-nav__link ">
+            <a href="../../features/multiple-networks/" class="md-nav__link ">
               
   
   
@@ -3116,7 +2924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../multiple-networks/multi-homing/" class="md-nav__link">
+      <a href="../../features/multiple-networks/multi-homing/" class="md-nav__link">
         
   
   
@@ -3144,7 +2952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../multiple-networks/multi-network-policies/" class="md-nav__link">
+      <a href="../../features/multiple-networks/multi-network-policies/" class="md-nav__link">
         
   
   
@@ -3172,7 +2980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../multiple-networks/multi-vtep/" class="md-nav__link">
+      <a href="../../features/multiple-networks/multi-vtep/" class="md-nav__link">
         
   
   
@@ -3208,7 +3016,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../multicast/" class="md-nav__link">
+      <a href="../../features/multicast/" class="md-nav__link">
         
   
   
@@ -3261,7 +3069,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../network-qos/" class="md-nav__link ">
+            <a href="../../features/network-qos/" class="md-nav__link ">
               
   
   
@@ -3305,7 +3113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network-qos/overview/" class="md-nav__link">
+      <a href="../../features/network-qos/overview/" class="md-nav__link">
         
   
   
@@ -3333,7 +3141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network-qos/usage-guide/" class="md-nav__link">
+      <a href="../../features/network-qos/usage-guide/" class="md-nav__link">
         
   
   
@@ -3369,7 +3177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../live-migration/" class="md-nav__link">
+      <a href="../../features/live-migration/" class="md-nav__link">
         
   
   
@@ -3397,7 +3205,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hybrid-overlay/" class="md-nav__link">
+      <a href="../../features/hybrid-overlay/" class="md-nav__link">
         
   
   
@@ -3425,7 +3233,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ovs-dynamic-cpu-affinity/" class="md-nav__link">
+      <a href="../../features/ovs-dynamic-cpu-affinity/" class="md-nav__link">
         
   
   
@@ -3478,7 +3286,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../hardware-offload/" class="md-nav__link ">
+            <a href="../../features/hardware-offload/" class="md-nav__link ">
               
   
   
@@ -3522,7 +3330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hardware-offload/ovs-kernel/" class="md-nav__link">
+      <a href="../../features/hardware-offload/ovs-kernel/" class="md-nav__link">
         
   
   
@@ -3550,7 +3358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hardware-offload/ovs-doca/" class="md-nav__link">
+      <a href="../../features/hardware-offload/ovs-doca/" class="md-nav__link">
         
   
   
@@ -3613,7 +3421,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../bgp-integration/" class="md-nav__link ">
+            <a href="../../features/bgp-integration/" class="md-nav__link ">
               
   
   
@@ -3657,7 +3465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../bgp-integration/route-advertisements/" class="md-nav__link">
+      <a href="../../features/bgp-integration/route-advertisements/" class="md-nav__link">
         
   
   
@@ -3685,7 +3493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../bgp-integration/no-overlay/" class="md-nav__link">
+      <a href="../../features/bgp-integration/no-overlay/" class="md-nav__link">
         
   
   
@@ -3713,7 +3521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../bgp-integration/evpn/" class="md-nav__link">
+      <a href="../../features/bgp-integration/evpn/" class="md-nav__link">
         
   
   
@@ -3783,7 +3591,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../troubleshooting/" class="md-nav__link ">
+            <a href="../../troubleshooting/" class="md-nav__link ">
               
   
   
@@ -3827,7 +3635,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../troubleshooting/debugging/" class="md-nav__link">
+      <a href="../../troubleshooting/debugging/" class="md-nav__link">
         
   
   
@@ -3855,7 +3663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../troubleshooting/ovnkube-trace/" class="md-nav__link">
+      <a href="../../troubleshooting/ovnkube-trace/" class="md-nav__link">
         
   
   
@@ -3883,7 +3691,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../troubleshooting/logging/" class="md-nav__link">
+      <a href="../../troubleshooting/logging/" class="md-nav__link">
         
   
   
@@ -3945,7 +3753,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../observability/" class="md-nav__link ">
+            <a href="../../observability/" class="md-nav__link ">
               
   
   
@@ -3989,7 +3797,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../observability/metrics/" class="md-nav__link">
+      <a href="../../observability/metrics/" class="md-nav__link">
         
   
   
@@ -4017,7 +3825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../observability/sdn-dashboard/" class="md-nav__link">
+      <a href="../../observability/sdn-dashboard/" class="md-nav__link">
         
   
   
@@ -4045,7 +3853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../observability/ovn-observability/" class="md-nav__link">
+      <a href="../../observability/ovn-observability/" class="md-nav__link">
         
   
   
@@ -4133,7 +3941,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../okeps/" class="md-nav__link ">
+            <a href="../../okeps/" class="md-nav__link ">
               
   
   
@@ -4177,7 +3985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5085-localnet-api/" class="md-nav__link">
+      <a href="../../okeps/okep-5085-localnet-api/" class="md-nav__link">
         
   
   
@@ -4205,7 +4013,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-4380-network-qos/" class="md-nav__link">
+      <a href="../../okeps/okep-4380-network-qos/" class="md-nav__link">
         
   
   
@@ -4233,7 +4041,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5193-user-defined-networks/" class="md-nav__link">
+      <a href="../../okeps/okep-5193-user-defined-networks/" class="md-nav__link">
         
   
   
@@ -4261,7 +4069,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5233-preconfigured-udn-addresses/" class="md-nav__link">
+      <a href="../../okeps/okep-5233-preconfigured-udn-addresses/" class="md-nav__link">
         
   
   
@@ -4289,7 +4097,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5296-bgp/" class="md-nav__link">
+      <a href="../../okeps/okep-5296-bgp/" class="md-nav__link">
         
   
   
@@ -4317,7 +4125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5094-layer2-transit-router/" class="md-nav__link">
+      <a href="../../okeps/okep-5094-layer2-transit-router/" class="md-nav__link">
         
   
   
@@ -4345,7 +4153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5494-ovn-kubernetes-mcp-server/" class="md-nav__link">
+      <a href="../../okeps/okep-5494-ovn-kubernetes-mcp-server/" class="md-nav__link">
         
   
   
@@ -4373,7 +4181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5552-dynamic-udn-node-allocation/" class="md-nav__link">
+      <a href="../../okeps/okep-5552-dynamic-udn-node-allocation/" class="md-nav__link">
         
   
   
@@ -4401,7 +4209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5224-connecting-udns/okep-5224-connecting-udns/" class="md-nav__link">
+      <a href="../../okeps/okep-5224-connecting-udns/okep-5224-connecting-udns/" class="md-nav__link">
         
   
   
@@ -4429,7 +4237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5259-no-overlay/" class="md-nav__link">
+      <a href="../../okeps/okep-5259-no-overlay/" class="md-nav__link">
         
   
   
@@ -4457,7 +4265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5088-evpn/" class="md-nav__link">
+      <a href="../../okeps/okep-5088-evpn/" class="md-nav__link">
         
   
   
@@ -4485,7 +4293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5674-dpu-healthcheck/" class="md-nav__link">
+      <a href="../../okeps/okep-5674-dpu-healthcheck/" class="md-nav__link">
         
   
   
@@ -4513,7 +4321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5377-extend-udn-to-support-multiple-cluster-subnets-in-layer3-topology/" class="md-nav__link">
+      <a href="../../okeps/okep-5377-extend-udn-to-support-multiple-cluster-subnets-in-layer3-topology/" class="md-nav__link">
         
   
   
@@ -4541,7 +4349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-6019-vrf-lite-shared-gateway-external-bridges/" class="md-nav__link">
+      <a href="../../okeps/okep-6019-vrf-lite-shared-gateway-external-bridges/" class="md-nav__link">
         
   
   
@@ -4569,7 +4377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-3926-disable-port-security/" class="md-nav__link">
+      <a href="../../okeps/okep-3926-disable-port-security/" class="md-nav__link">
         
   
   
@@ -4597,7 +4405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../okeps/okep-5212-ovnobserv-api/" class="md-nav__link">
+      <a href="../../okeps/okep-5212-ovnobserv-api/" class="md-nav__link">
         
   
   
@@ -4659,7 +4467,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../blog/" class="md-nav__link ">
+            <a href="../../blog/" class="md-nav__link ">
               
   
   
@@ -4703,7 +4511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../blog/dpu-acceleration/" class="md-nav__link">
+      <a href="../../blog/dpu-acceleration/" class="md-nav__link">
         
   
   
@@ -4731,7 +4539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../blog/netobserv/" class="md-nav__link">
+      <a href="../../blog/netobserv/" class="md-nav__link">
         
   
   
@@ -4759,7 +4567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -4825,123 +4633,102 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#enabling-the-feature" class="md-nav__link">
+  <a href="#multiple-mac-issue-during-egressip-failover-garp-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Enabling the Feature
+        Multiple MAC Issue During EgressIP Failover (GARP Handling)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multiple MAC Issue During EgressIP Failover (GARP Handling)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solution-1-garp-drop-flows-on-the-bridge-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solution 1: GARP Drop Flows on the Bridge (Startup)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-scope" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#solution-2-nftables-arpndp-blocking-during-shutdown" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Scope
+        Solution 2: nftables ARP/NDP Blocking During Shutdown
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solution 2: nftables ARP/NDP Blocking During Shutdown">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-nftables-and-the-netdev-family" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why nftables and the netdev Family
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#api-overview" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#shutdown-sequence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API Overview
+        Shutdown Sequence
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#regular-node-deployments" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#startup-cleanup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Regular Node Deployments
+        Startup Cleanup
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#dpu-deployments" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#ungraceful-shutdown" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DPU Deployments
+        Ungraceful Shutdown
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#uplinkstate-and-conditions" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#combined-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        UplinkState and Conditions
+        Combined Protection
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#dynamic-udn" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dynamic UDN
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#route-advertisements-and-vrfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Route Advertisements and VRFs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Services
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4965,448 +4752,192 @@
   
 
 
-<h1 id="uplinks-for-user-defined-networks">Uplinks for User Defined Networks<a class="headerlink" href="#uplinks-for-user-defined-networks" title="Permanent link">¶</a></h1>
+<h1 id="egressip">EgressIP<a class="headerlink" href="#egressip" title="Permanent link">¶</a></h1>
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">¶</a></h2>
-<p>An <code>Uplink</code> is a cluster-scoped API that lets a
-<code>ClusterUserDefinedNetwork</code> use a named external network path instead of the
-cluster default gateway bridge. This is useful when different tenant networks
-need different north-south paths, different Linux VRFs, or different BGP
-peering interfaces.</p>
-<p>An <code>Uplink</code> does not create or manage the external OVS bridge. The bridge and
-its physical uplink must already exist on the selected nodes. OVN-Kubernetes
-discovers the bridge, records node-local state in <code>UplinkState</code>, configures OVN
-bridge mappings, and programs the gateway and service flows needed by the CUDN.</p>
-<h2 id="enabling-the-feature">Enabling the Feature<a class="headerlink" href="#enabling-the-feature" title="Permanent link">¶</a></h2>
-<p>The Uplink feature is opt-in and disabled by default. It is a sub-feature of
-network segmentation and is only active when both network segmentation and the
-Uplink feature flag are enabled.</p>
-<p>Enable it by passing <code>--enable-uplink</code> to the ovnkube components (this requires
-<code>--enable-network-segmentation</code>, which in turn requires
-<code>--enable-multi-network</code>). Depending on how the cluster is deployed:</p>
+<p>EgressIP provides a mechanism for Kubernetes pods to use a specific, predictable
+source IP address for traffic leaving the cluster, instead of the default node
+IP. This is essential in environments where external firewalls, access control
+lists, or audit systems identify traffic by source IP. Without EgressIP, a pod's
+egress traffic is SNATed to the node IP, which changes whenever the pod is
+rescheduled to a different node.</p>
+<p>There are two flavors of EgressIP based on the network the egress IP belongs to:</p>
 <ul>
-<li>Helm: set all three global values:</li>
+<li><strong>Primary (OVN) network EgressIP</strong>: the egress IP belongs to the subnet of the
+  primary machine network of the node. SNAT is performed atomically inside OVN's
+  gateway router. The IP is added to the OVS bridge interface (e.g. <code>breth0</code>).</li>
+<li><strong>Secondary host network EgressIP</strong>: the egress IP belongs to the node's secondary NICs.
+  Traffic is rerouted out of OVN via the management port (<code>ovn-k8s-mp0</code>), then SNAT
+  and routing happen in the host networking stack using iptables and policy-based routing.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">global</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enableMultiNetwork</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">    </span><span class="nt">enableNetworkSegmentation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">    </span><span class="nt">enableUplink</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<h2 id="multiple-mac-issue-during-egressip-failover-garp-handling">Multiple MAC Issue During EgressIP Failover (GARP Handling)<a class="headerlink" href="#multiple-mac-issue-during-egressip-failover-garp-handling" title="Permanent link">¶</a></h2>
+<p>When an egress IP migrates from Node A (old) to Node B (new) in case of graceful
+shutdown of Node A, Node B sends a GARP to announce its MAC as the owner of the
+egress IP. However, Node A may continue responding to ARP requests for the egress IP
+until it fully shuts down. This creates a window where external switches see two
+different MACs for the same IP, causing traffic to be intermittently sent to the wrong
+node (blackholed).</p>
+<p>Two entities on the old node can respond to ARP for the egress IP:</p>
+<ol>
+<li><strong>The egress IP attached to the bridge interface</strong>: the IP remains on the
+   bridge (e.g. <code>breth0</code>) until the interface is brought down during node
+   shutdown. The Linux kernel responds to ARP requests for any IP on its
+   interfaces.
+   <strong>TODO:</strong> Further discussion is required to decide whether we need primary
+   EgressIP on node interface or not.</li>
+<li><strong>OVN logical flows (SNAT at the gateway router)</strong>: OVN's gateway router ARP
+   responder tables generate unicast ARP replies for any IP that has a SNAT entry.
+   These flows remain active as long as <code>ovs-vswitchd</code> is running.</li>
+</ol>
+<p>In bare-metal environments, node shutdown can take 10-20 seconds, creating a
+prolonged window for multiple MAC responses. As a result, the ARP table at the
+networking device may get updated with a wrong MAC address. The way network
+devices are configured to update the ARP table also contributes to the issue. Modern
+network devices can be configured to override existing neighbor entries without
+GARP to support a scenario where a VIP moves without GARP. However, this is a
+transient issue and gets resolved as soon as the old EgressIP node stops responding
+and the external network device updates the ARP table.</p>
+<div class="highlight"><pre><span></span><code>    Node A (old EIP owner)          Network         Node B (new EIP owner)
+    ──────────────────────         ─────────         ──────────────────────
+              │                        │                       │
+              │     Health check fails │                       │
+              │◄───────────────────────┤                       │
+              │                        │   Cluster manager     │
+              │                        │   reassigns EIP       │
+              │                        │──────────────────────►│
+              │                        │                       │
+              │                        │       GARP (MAC_B)    │
+              │                        │◄──────────────────────┤
+              │                        │                       │
+              │   ARP request for EIP  │                       │
+              │◄───────────────────────┤                       │
+              │                        │                       │
+              │   ARP reply (MAC_A)    │   !! Duplicate MAC    │
+              │───────────────────────►│                       │
+              │                        │                       │
+              │ Network sees TWO MACs for the EIP              │
+              │ Traffic is black-holed intermittently          │
+              │                        │                       │
 </code></pre></div>
-<ul>
-<li>kind: pass <code>--multi-network-enable</code> (<code>-mne</code>), <code>--network-segmentation-enable</code>
-  (<code>-nse</code>), and <code>--uplink-enable</code> (<code>-ue</code>) to <code>contrib/kind.sh</code></li>
-</ul>
-<p>A <code>ClusterUserDefinedNetwork</code> keeps its <code>spec.uplinks</code> field regardless of the
-feature flag, but the reference is only acted upon when the feature is enabled.
-When the feature is disabled, a <code>ClusterUserDefinedNetwork</code> that sets
-<code>spec.uplinks</code> is <strong>rejected</strong> rather than silently ignored: the CUDN's
-<code>NetworkCreated</code> condition is set to <code>False</code> with reason
-<code>NetworkAttachmentDefinitionSyncError</code> and the message
-<code>spec.uplinks is set but the Uplink feature is disabled, ignoring this CUDN</code>, and no
-<code>NetworkAttachmentDefinition</code> is created for it. Enabling network segmentation
-alone is not sufficient — <code>--enable-uplink</code> must also be set.</p>
-<h2 id="supported-scope">Supported Scope<a class="headerlink" href="#supported-scope" title="Permanent link">¶</a></h2>
-<p>This feature currently supports:</p>
-<ul>
-<li><code>ClusterUserDefinedNetwork</code> only.</li>
-<li>Primary <code>Layer2</code> and primary <code>Layer3</code> CUDNs.</li>
-<li>One Uplink name in <code>ClusterUserDefinedNetwork.spec.uplinks</code>.</li>
-<li><code>Uplink.spec.nodeConfigs[].type: OVSBridge</code>.</li>
-<li>Shared gateway mode.</li>
-<li>Regular nodes and DPU deployments.</li>
-</ul>
-<p>This feature does not currently support:</p>
-<ul>
-<li>Namespace-scoped <code>UserDefinedNetwork</code>.</li>
-<li>Secondary networks.</li>
-<li><code>Localnet</code> topology.</li>
-<li>Local gateway mode.</li>
-<li>EVPN transport.</li>
-<li>Creating or configuring the external OVS bridge.</li>
-<li>Reusing the cluster default shared gateway bridge as an Uplink.</li>
-<li>More than one Uplink per CUDN.</li>
-</ul>
-<h2 id="api-overview">API Overview<a class="headerlink" href="#api-overview" title="Permanent link">¶</a></h2>
-<p><code>Uplink</code> selects node groups and names the host-visible interface used for each
-selected node:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s.ovn.org/v1alpha1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Uplink</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tenant-blue</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">nodeConfigs</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OVSBridge</span>
-<span class="w">    </span><span class="nt">nodeSelector</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">example.com/tenant-blue-uplink</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
-<span class="w">    </span><span class="nt">hostInterfaceName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ovsbr1</span>
-</code></pre></div>
-<p><code>hostInterfaceName</code> is the host-side Linux interface that carries the gateway
-L3 identity for the uplink:</p>
-<ul>
-<li>On a regular non-accelerated node, this is normally the OVS bridge internal
-  interface. The physical NIC must already be a port on that bridge.</li>
-<li>On a SmartNIC accelerated node, this is the VF/SF netdevice that carries the
-  gateway IPs. Its representor must already be a port on the OVS bridge.</li>
-<li>On a DPU-host node, this is the host-visible interface connected to the DPU
-  uplink path. OVN-Kubernetes uses it to discover the host-side L3 state.</li>
-<li>On the DPU side, OVN-Kubernetes resolves the DPU-local OVS bridge from the
-  host-side state. The DPU-local interface name is not specified in the API.</li>
-</ul>
-<p>Each selected node must match at most one <code>nodeConfig</code> in a single <code>Uplink</code>.
-If multiple <code>nodeConfigs</code> select the same node, the <code>Uplink</code> is not ready and a
-CUDN that needs that node reports <code>UplinksReady=False</code>.</p>
-<p>A CUDN references the Uplink by name:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s.ovn.org/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterUserDefinedNetwork</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blue</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">namespaceSelector</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">kubernetes.io/metadata.name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blue</span>
-<span class="w">  </span><span class="nt">uplinks</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tenant-blue</span>
-<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">topology</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Layer3</span>
-<span class="w">    </span><span class="nt">layer3</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Primary</span>
-<span class="w">      </span><span class="nt">subnets</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cidr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.200.0.0/16</span>
-<span class="w">        </span><span class="nt">hostSubnet</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
-</code></pre></div>
-<h2 id="regular-node-deployments">Regular Node Deployments<a class="headerlink" href="#regular-node-deployments" title="Permanent link">¶</a></h2>
-<p>For non-DPU deployments, the administrator provisions the OVS bridge before the
-<code>Uplink</code> is used. For non-accelerated nodes, the bridge must have:</p>
-<ul>
-<li>An internal interface named by <code>hostInterfaceName</code>.</li>
-<li>One physical uplink port that reaches the external network.</li>
-<li>The expected IP addresses and default gateways on the internal interface.</li>
-<li>Link state up on the bridge, internal interface, and physical uplink.</li>
-<li>MTU configured consistently on the physical NIC, bridge, and bridge ports.</li>
-</ul>
-<p>For SmartNIC accelerated nodes, <code>hostInterfaceName</code> is the VF/SF netdevice with
-the gateway IPs. Its representor must be a port on the OVS bridge. OVN-Kubernetes
-discovers the representor from <code>hostInterfaceName</code>, then discovers the OVS
-bridge from the representor.</p>
-<p>OVN-Kubernetes discovers the bridge from <code>hostInterfaceName</code> or from its
-representor. It rejects the configuration if the interface is the physical
-uplink port itself, if the bridge cannot be resolved, if the bridge is <code>br-int</code>,
-or if the bridge has no discoverable physical uplink.</p>
-<p>After discovery succeeds, ovnkube-node updates the per-node <code>UplinkState</code> with
-the resolved bridge name, MAC address, IP addresses, and default gateways.
-OVN-Kubernetes then uses that state to build the CUDN gateway configuration.</p>
-<h2 id="dpu-deployments">DPU Deployments<a class="headerlink" href="#dpu-deployments" title="Permanent link">¶</a></h2>
-<p>DPU deployments split Uplink discovery across the host and DPU components:</p>
-<ul>
-<li>The DPU-host ovnkube-node reads <code>hostInterfaceName</code>, discovers the host-side
-  MAC address, IP addresses, and default gateways, and writes that data to
-  <code>UplinkState</code>. When the host interface is an SR-IOV function, it also
-  writes the PF index — and, for a VF, the VF index — to
-  <code>status.hostFunction</code>.</li>
-<li>The DPU ovnkube-node reads the same <code>UplinkState</code> and finds the DPU-local
-  representor and OVS bridge: with <code>status.hostFunction</code> it resolves the PF
-  or VF representor directly from the published indices, and a representor
-  resolved this way must peer with the published host MAC, the uplink's
-  identity, whenever that peer MAC is readable. Without
-  <code>status.hostFunction</code>, and when the published indices do not resolve, it
-  scans bridges for the representor whose host-side peer has the published
-  MAC address. Index resolution covers PF indices 0 and 1 on the default
-  controller; other layouts resolve through the MAC scan. It then validates
-  the bridge and writes <code>status.ovsBridge.name</code>.</li>
-<li>Once both sides have published the required data, the <code>UplinkState</code> becomes
-  <code>Resolved=True</code>.</li>
-</ul>
-<p>The user does not provide the DPU-local OVS bridge name in the <code>Uplink</code> API.
-The DPU side derives it from the DPU-local OVS bridge state. The bridge must
-already be provisioned with the host representor or bridge port that connects
-to the host uplink path.</p>
-<p>The same MTU requirement applies in DPU deployments. The host-side interface,
-DPU representor, DPU OVS bridge, and physical uplink must be configured
-consistently by the platform.</p>
-<h2 id="uplinkstate-and-conditions">UplinkState and Conditions<a class="headerlink" href="#uplinkstate-and-conditions" title="Permanent link">¶</a></h2>
-<p><code>UplinkState</code> is a cluster-scoped, per-node state object. Its name is derived
-from the Uplink name and node name. It is owned by the <code>Uplink</code>.</p>
-<p>The required, immutable <code>spec.uplinkName</code> and <code>spec.nodeName</code> fields are the
-canonical identity. <code>UplinkState</code> does not use a status subresource, allowing
-OVN-Kubernetes to create the identity and initial status in one API operation.</p>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s.ovn.org/v1alpha1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UplinkState</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tenant-blue.worker-a</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">uplinkName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tenant-blue</span>
-<span class="w">  </span><span class="nt">nodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-a</span>
-<span class="nt">status</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OVSBridge</span>
-<span class="w">  </span><span class="nt">hostInterfaceName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ovsbr1</span>
-<span class="w">  </span><span class="nt">ovsBridge</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ovsbr1</span>
-<span class="w">  </span><span class="nt">macAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">02:42:ac:1c:00:02</span>
-<span class="w">  </span><span class="nt">ipAddresses</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">172.28.0.2/16</span>
-<span class="w">  </span><span class="nt">defaultGateways</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">172.28.0.1</span>
-<span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
-<span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">"True"</span>
-<span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GatewayReady</span>
-<span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">"True"</span>
-<span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GatewayConfigured</span>
-</code></pre></div>
-<p>The <code>Resolved</code> condition reports node-local host interface and OVS bridge
-discovery. The <code>GatewayReady</code> condition reports aggregate gateway programming
-for every CUDN active on this Uplink and node. This includes bridge mappings,
-physical patch ports, per-network bridge configuration, OpenFlow, and VRF
-attachment. When the active CUDN set changes, <code>GatewayReady</code> first becomes
-<code>False</code> with reason <code>GatewayConfigurationPending</code> and returns to <code>True</code> only
-after the complete active set converges. A gateway programming failure does not
-change discovery <code>Resolved</code>; the CUDN-specific <code>UplinksReady</code> condition reflects
-both states. In split DPU mode the host-side share of gateway programming, the
-VRF attachment of the Uplink gateway interface on the DPU-Host, is reported
-separately on the <code>HostGatewayReady</code> condition, and the CUDN <code>UplinksReady</code>
-condition requires both.</p>
-<p>The <code>Uplink</code> object reports aggregate status:</p>
-<ul>
-<li><code>Ready=True</code> means every selected node has successfully discovered a
-  matching <code>UplinkState</code> with <code>Resolved=True</code>.</li>
-<li><code>Ready=False</code> means one or more selected nodes are missing or have failed
-  Uplink discovery, or the <code>Uplink</code> spec selects nodes incorrectly.</li>
-</ul>
-<p>For node-scoped failures, the <code>Ready</code> message reports the number of affected
-nodes out of all selected nodes and a bounded sample of node names and
-underlying <code>UplinkState</code> reasons. <code>GatewayReady</code> is not part of this aggregate;
-it is evaluated for the active nodes of each CUDN.</p>
-<p><code>UplinkState</code> supports field selection by Uplink name and node name:</p>
-<div class="highlight"><pre><span></span><code>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>uplinkstate<span class="w"> </span>--field-selector<span class="w"> </span>spec.uplinkName<span class="o">=</span>tenant-blue
-NAME<span class="w">                   </span>UPLINK<span class="w">        </span>NODE<span class="w">       </span>RESOLVED
-tenant-blue.worker-a<span class="w">   </span>tenant-blue<span class="w">   </span>worker-a<span class="w">   </span>True
-tenant-blue.worker-b<span class="w">   </span>tenant-blue<span class="w">   </span>worker-b<span class="w">   </span>True
+<h3 id="solution-1-garp-drop-flows-on-the-bridge-startup">Solution 1: GARP Drop Flows on the Bridge (Startup)<a class="headerlink" href="#solution-1-garp-drop-flows-on-the-bridge-startup" title="Permanent link">¶</a></h3>
+<p>When ovn-controller starts, it connects to the OVN Southbound database and
+immediately sends GARPs for any egress IPs configured on its logical router
+ports. The Southbound database may be stale if ovnkube-controller has not
+synced yet with new egress IP CR status, causing GARPs for egress IPs that
+have already been reassigned to other nodes.</p>
+<p>To address this, OVN-Kubernetes installs the following OpenFlow rules on the
+default bridge while shutting down node controller manager. We make sure to
+remove these flows after ovn-controller has synced once.</p>
+<div class="highlight"><pre><span></span><code># Allow GARPs sourced from a node IP (priority 499)
+cookie=0x0305,table=0,priority=499,in_port=&lt;patch-port&gt;,dl_dst=ff:ff:ff:ff:ff:ff,arp,arp_op=1,arp_spa=&lt;node-ip&gt;,actions=output:NORMAL
 
-$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>uplinkstate<span class="w"> </span>--field-selector<span class="w"> </span>spec.uplinkName<span class="o">=</span>tenant-blue,spec.nodeName<span class="o">=</span>worker-a<span class="w"> </span>-o<span class="w"> </span>yaml
-apiVersion:<span class="w"> </span>v1
-items:
--<span class="w"> </span>apiVersion:<span class="w"> </span>k8s.ovn.org/v1alpha1
-<span class="w">  </span>kind:<span class="w"> </span>UplinkState
-<span class="w">  </span>metadata:
-<span class="w">    </span>name:<span class="w"> </span>tenant-blue.worker-a
-<span class="w">  </span>spec:
-<span class="w">    </span>uplinkName:<span class="w"> </span>tenant-blue
-<span class="w">    </span>nodeName:<span class="w"> </span>worker-a
-<span class="w">  </span>status:
-<span class="w">    </span>type:<span class="w"> </span>OVSBridge
-<span class="w">    </span>hostInterfaceName:<span class="w"> </span>ovsbr1
-<span class="w">    </span>ovsBridge:
-<span class="w">      </span>name:<span class="w"> </span>ovsbr1
-<span class="w">    </span>conditions:
-<span class="w">    </span>-<span class="w"> </span>type:<span class="w"> </span>Resolved
-<span class="w">      </span>status:<span class="w"> </span><span class="s2">"True"</span>
-<span class="w">      </span>reason:<span class="w"> </span>Resolved
-<span class="w">    </span>-<span class="w"> </span>type:<span class="w"> </span>GatewayReady
-<span class="w">      </span>status:<span class="w"> </span><span class="s2">"True"</span>
-<span class="w">      </span>reason:<span class="w"> </span>GatewayConfigured
-kind:<span class="w"> </span>List
-metadata:
-<span class="w">  </span>resourceVersion:<span class="w"> </span><span class="s2">""</span>
+# Drop all other GARPs (priority 498)
+cookie=0x0305,table=0,priority=498,in_port=&lt;patch-port&gt;,dl_dst=ff:ff:ff:ff:ff:ff,arp,arp_op=1,actions=drop
 </code></pre></div>
-<p>When one or more CUDNs reference an <code>Uplink</code>, OVN-Kubernetes keeps a finalizer
-on the <code>Uplink</code> so it cannot be deleted while still selected by a CUDN.</p>
-<p><code>UplinkState</code> objects are exclusively owned by OVN-Kubernetes and recover from
-out-of-band deletion: if an <code>UplinkState</code> is deleted directly (for example with
-<code>kubectl delete</code>), ovnkube-node recreates it without a restart, discovery
-republishes <code>Resolved=True</code>, a previously published <code>GatewayReady</code> condition is
-restored (on a brand-new <code>UplinkState</code> it still appears only once gateway
-programming has run), and the CUDN returns to <code>UplinksReady=True</code>. An <code>UplinkState</code> is not
-recreated when its <code>Uplink</code> is terminating (its <code>UplinkState</code> objects are
-deleted on purpose during teardown), no longer exists, or no longer selects the
-node.</p>
-<p>The CUDN reports a CUDN-specific <code>UplinksReady</code> condition. This condition is
-computed from the active nodes for that CUDN, not directly from aggregate
-<code>Uplink.status</code>. This matters with Dynamic UDN, where two CUDNs can reference
-the same <code>Uplink</code> but be active on different nodes.</p>
-<p>For a CUDN that does not set <code>spec.uplinks</code>, <code>UplinksReady=True</code> and existing
-gateway behavior is preserved.</p>
-<h2 id="dynamic-udn">Dynamic UDN<a class="headerlink" href="#dynamic-udn" title="Permanent link">¶</a></h2>
-<p>With Dynamic UDN enabled, OVN-Kubernetes delays Uplink gateway programming on a
-node until the CUDN becomes active on that node. Inactive nodes do not block the
-CUDN <code>UplinksReady</code> condition.</p>
-<p>If a node later becomes inactive for the CUDN, OVN-Kubernetes does not
-immediately remove the Uplink bridge configuration. The normal Dynamic UDN
-inactive-network cleanup behavior applies to the CUDN network state.</p>
-<p>See <a href="../dynamic-udn/">Dynamic UDN Node Allocation</a> for the node activity model.</p>
-<h2 id="route-advertisements-and-vrfs">Route Advertisements and VRFs<a class="headerlink" href="#route-advertisements-and-vrfs" title="Permanent link">¶</a></h2>
-<p>The Uplink feature works with RouteAdvertisements. The selected
-RouteAdvertisements determine whether the Uplink bridge stays in the default
-VRF or is attached to the CUDN VRF.</p>
-<p>When a CUDN using an Uplink is advertised through the default VRF,
-OVN-Kubernetes leaves the Uplink bridge in the default VRF. Routes learned by
-FRR in the default VRF can be used for the CUDN, and pod egress uses the Uplink
-gateway path.</p>
-<p>When a CUDN using an Uplink is advertised with <code>targetVRF: auto</code>,
-OVN-Kubernetes treats the Uplink as the VRF-Lite path for that CUDN. The Uplink
-bridge interface is enslaved to the CUDN Linux VRF on regular nodes. In DPU
-deployments, the DPU-local bridge interface is attached to the CUDN VRF on the
-DPU side. FRR peers in that VRF, and ovnkube reflects the routes learned in
-that VRF into the OVN gateway routers for the CUDN.</p>
-<p>Multiple Dynamic CUDNs may use the same Uplink with <code>targetVRF: auto</code> when
-their active node sets do not overlap. If more than one such CUDN becomes
-active on the same node, the Uplink bridge cannot be attached to both CUDN
-VRFs and OVN-Kubernetes reports <code>UplinkConfigurationConflict</code>.</p>
-<p>For every primary CUDN, OVN-Kubernetes publishes the name of the Linux VRF
-device it creates on every node where the network is present in the CUDN
-<code>status.vrfName</code> field. Consumers that must name the VRF explicitly, such as
-FRRConfiguration authors filling in the routers <code>vrf</code> field, should read this
-value instead of deriving it: the derivation rule (the CUDN name when it fits
-within the kernel's 15-character interface name limit, an ID-derived name
-otherwise) is an internal implementation detail that may change.</p>
-<p>Example RouteAdvertisements for VRF-Lite:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s.ovn.org/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RouteAdvertisements</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blue</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">targetVRF</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
-<span class="w">  </span><span class="nt">networkSelectors</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">networkSelectionType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterUserDefinedNetworks</span>
-<span class="w">    </span><span class="nt">clusterUserDefinedNetworkSelector</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">networkSelector</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">advertise</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blue</span>
-<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
-<span class="w">  </span><span class="nt">frrConfigurationSelector</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">network</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blue</span>
-<span class="w">  </span><span class="nt">advertisements</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PodNetwork</span>
-</code></pre></div>
-<p>The Uplink object does not decide which routes exist. Routes come from the
-kernel routing table and from RouteAdvertisements and FRR configuration.</p>
-<h2 id="services">Services<a class="headerlink" href="#services" title="Permanent link">¶</a></h2>
-<p>OVN-Kubernetes programs service flows on the external bridge associated with
-the CUDN. For a CUDN that uses an Uplink, per-UDN service flows are programmed
-on the resolved Uplink bridge rather than only on the cluster default gateway
-bridge.</p>
-<p>For default-VRF Uplinks, NodePort traffic can enter from the cluster default
-gateway path or from the Uplink path and still reach services backed by pods on
-the Uplink CUDN.</p>
-<p>For VRF-Lite Uplinks, service traffic is expected to enter through an interface
-that belongs to the same VRF as the CUDN. Traffic that enters from an unrelated
-VRF is not expected to reach services for that CUDN.</p>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">¶</a></h2>
-<p>Check the aggregate Uplink status:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>uplink<span class="w"> </span>tenant-blue<span class="w"> </span>-o<span class="w"> </span>yaml
-</code></pre></div>
-<p>Check the per-node discovery state:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>uplinkstate<span class="w"> </span>--field-selector<span class="w"> </span>spec.uplinkName<span class="o">=</span>tenant-blue<span class="w"> </span>-o<span class="w"> </span>wide
-kubectl<span class="w"> </span>get<span class="w"> </span>uplinkstate<span class="w"> </span>tenant-blue.worker-a<span class="w"> </span>-o<span class="w"> </span>yaml
-</code></pre></div>
-<p>Check the CUDN condition:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>clusteruserdefinednetwork<span class="w"> </span>blue<span class="w"> </span>-o<span class="w"> </span>yaml
-</code></pre></div>
-<p>Common problems:</p>
 <ul>
-<li><code>Uplink</code> with <code>Ready</code> condition status <code>False</code> and reason
-  <code>MissingUplinkState</code>: the selected node has not created or published its
-  <code>UplinkState</code>.</li>
-<li><code>UplinkState</code> with <code>Resolved</code> condition status <code>False</code> and reason
-  <code>HostInterfaceNotFound</code>: the selected <code>hostInterfaceName</code> does not exist on
-  the node.</li>
-<li><code>UplinkState</code> with <code>Resolved</code> condition status <code>False</code> and reason
-  <code>BridgeNotFound</code>: OVN-Kubernetes could not map <code>hostInterfaceName</code> to an OVS
-  bridge.</li>
-<li><code>UplinkState</code> with <code>Resolved</code> condition status <code>False</code> and reason
-  <code>BridgeUplinkNotFound</code>: the resolved OVS bridge does not have a discoverable
-  physical uplink port.</li>
-<li><code>UplinkState</code> with <code>Resolved</code> condition status <code>False</code> and reason
-  <code>BridgeInvalid</code>: the selected bridge is not a valid external bridge, for
-  example <code>br-int</code>.</li>
-<li><code>UplinkState</code> with <code>Resolved</code> condition status <code>False</code> and reason
-  <code>DefaultGatewayBridgeUnsupported</code>: the selected bridge is the cluster
-  default shared gateway bridge, which cannot currently be reused as an
-  Uplink.</li>
-<li><code>UplinkState</code> with <code>Resolved</code> condition status <code>False</code> and reason
-  <code>WaitingForDPUHost</code> (split DPU mode only): the DPU side is waiting for the
-  DPU-Host to publish complete host interface data. Check the <code>HostDataReady</code>
-  condition on the same <code>UplinkState</code> for the DPU-Host-side cause.</li>
-<li><code>UplinkState</code> with <code>HostDataReady</code> condition status <code>False</code> (split DPU mode
-  only): host interface data discovery failed on the DPU-Host; the reason
-  carries the cause, for example <code>HostInterfaceNotFound</code> when the selected
-  <code>hostInterfaceName</code> does not exist on the DPU-Host, or
-  <code>GatewayInfoUnavailable</code> when the interface has no IP addresses yet.</li>
-<li><code>UplinkState</code> with <code>GatewayReady</code> condition status <code>False</code> and reason
-  <code>GatewayConfigurationPending</code>: the active CUDN set changed and complete
-  gateway programming has not converged yet.</li>
-<li><code>UplinkState</code> with <code>GatewayReady</code> condition status <code>False</code> and reason
-  <code>UplinkBridgeMappingFailed</code>: OVN-Kubernetes could not configure the CUDN
-  bridge mappings or discover a physical patch port on the resolved OVS bridge.</li>
-<li><code>UplinkState</code> with <code>GatewayReady</code> condition status <code>False</code> and reason
-  <code>UplinkVRFAttachmentFailed</code>: OVN-Kubernetes could not attach or detach the
-  Uplink gateway interface for the CUDN routing domain.</li>
-<li><code>UplinkState</code> with <code>GatewayReady</code> condition status <code>False</code> and reason
-  <code>UplinkGatewayProgrammingFailed</code>: OVN-Kubernetes could not reconcile the
-  per-network bridge configuration or gateway OpenFlow for the active CUDNs.</li>
-<li><code>UplinkState</code> with <code>GatewayReady</code> condition status <code>False</code> and reason
-  <code>UplinkConfigurationConflict</code>: the resolved Uplink bridge is already
-  attached to a different VRF on this node.</li>
-<li><code>UplinkState</code> with <code>HostGatewayReady</code> condition status <code>False</code> (split DPU
-  mode only): host-side gateway programming failed on the DPU-Host, for
-  example reason <code>UplinkVRFAttachmentFailed</code> when the Uplink gateway
-  interface could not be attached to or detached from the CUDN routing
-  domain on the DPU-Host.</li>
-<li>CUDN with <code>UplinksReady</code> condition status <code>False</code> and reason
-  <code>UplinkNotResolvedForNode</code>: at least one active node for the CUDN does not have
-  a matching <code>UplinkState</code> with <code>Resolved=True</code>.</li>
-<li>CUDN with <code>UplinksReady</code> condition status <code>False</code> and reason
-  <code>UplinkNotFoundForNode</code>: the referenced Uplink does not select an active node
-  for the CUDN.</li>
-<li>CUDN with <code>UplinksReady</code> condition status <code>False</code> and reason
-  <code>UplinkOverlapOnNode</code>: multiple <code>nodeConfigs</code> in the referenced Uplink select
-  the same active node.</li>
-<li>CUDN with <code>UplinksReady</code> condition status <code>False</code> and reason
-  <code>UplinkConfigurationConflict</code>: the CUDN is part of an unsupported same-node
-  Uplink bridge sharing configuration.</li>
-<li>CUDN with <code>UplinksReady</code> condition status <code>False</code> and reason
-  <code>UplinkUnsupportedGatewayMode</code>: the cluster is not running shared gateway
-  mode.</li>
-<li>CUDN with <code>UplinksReady</code> condition status <code>False</code> and reason
-  <code>UplinkUnsupportedTransport</code>: the CUDN uses EVPN transport, which is not
-  supported with Uplinks.</li>
+<li><strong>Priority 499</strong>: allow GARP packets where the source IP is a node IP (via
+  <code>generateGratuitousARPAllowFlow</code>).</li>
+<li><strong>Priority 498</strong>: drop all other GARP packets (via <code>generateGratuitousARPDropFlow</code>).</li>
 </ul>
-<p>In split DPU mode each <code>UplinkState</code> condition has a single writer: the
-DPU-Host publishes the host interface data and the <code>HostDataReady</code> and
-<code>HostGatewayReady</code> conditions, while ovnkube-node on the DPU publishes
-<code>Resolved</code> and <code>GatewayReady</code>. Bridge reasons (<code>BridgeNotFound</code>,
-<code>BridgeUplinkNotFound</code>) therefore always describe OVS on the DPU, and
-<code>HostDataReady</code>/<code>HostGatewayReady</code> reasons always describe the DPU-Host.</p>
-<p>In DPU deployments, FRR peering and route import happen on the DPU:
-BGP-learned routes are not propagated to the DPU-Host's CUDN VRF.
-Host-originated traffic toward the Uplink therefore requires a default
-gateway route on the selected host interface (preserved into the CUDN VRF
-across enslavement) or a host-side FRR setup; pod traffic toward the Uplink
-is unaffected, since its routes are imported into the gateway router on the
-DPU.</p>
-<div class="highlight"><pre><span></span><code>             DPU                                DPU-Host
- +---------------------------+      +----------------------------+
- | FRR --- BGP peering       |      | CUDN VRF                   |
- |          |                |      |  - no BGP-learned routes   |
- |          v                |      |  - preserved default       |
- | CUDN route-import VRF     |      |    gateway route           |
- |          | imported       |      |    (or host-side FRR)      |
- |          v                |      +-------------+--------------+
- | CUDN gateway router (OVN) |                    |
- +-------------+-------------+                    | host-originated
-               | pod traffic                      | traffic
-               v                                  v
-             Uplink &lt;-----------------------------+
-</code></pre></div>
-<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">¶</a></h2>
+<p>These flows match on <code>dl_dst=ff:ff:ff:ff:ff:ff, arp, arp_op=1</code> (broadcast ARP
+requests, the opcode OVN uses for GARPs per RFC 5227).</p>
+<p>The flows remain in place until the ovnkube-controller has fully synced with the
+OVN Northbound database. At that point, stale SNAT entries have been removed, so
+ovn-controller will only GARP for valid egress IPs.</p>
+<p>This solution prevents <strong>outbound stale GARPs</strong> from the restarting node, but
+does <strong>not</strong> prevent the node from <strong>responding</strong> to incoming ARP requests.</p>
+<h3 id="solution-2-nftables-arpndp-blocking-during-shutdown">Solution 2: nftables ARP/NDP Blocking During Shutdown<a class="headerlink" href="#solution-2-nftables-arpndp-blocking-during-shutdown" title="Permanent link">¶</a></h3>
+<p>The GARP drop flows above address the startup case but do not cover the shutdown
+case: after the egress IP is reassigned to Node B, Node A's kernel and OVN
+logical flows still respond to ARP requests until <code>ovs-vswitchd</code> stops.</p>
+<h4 id="why-nftables-and-the-netdev-family">Why nftables and the netdev Family<a class="headerlink" href="#why-nftables-and-the-netdev-family" title="Permanent link">¶</a></h4>
+<p>The key insight is that ARP responses on the old node originate from two
+independent subsystems (kernel IP stack and OVN logical flows), and both must be
+silenced before the bridge interface is brought down. The <code>netdev</code> table family
+in nftables provides an ingress hook on the physical uplink interface that
+evaluates packets <strong>before</strong> they reach the OVS bridge. This is the earliest
+possible interception point — it stops ARP requests from reaching either the
+bridge interface (where the kernel would respond) or <code>ovs-vswitchd</code> (where OVN
+logical flows would respond).</p>
+<h4 id="shutdown-sequence">Shutdown Sequence<a class="headerlink" href="#shutdown-sequence" title="Permanent link">¶</a></h4>
+<p>The following sequence is executed during graceful shutdown:</p>
+<ol>
+<li><strong>Collect assigned egress IPs</strong>: queries the EgressIP informer to find all
+   egress IPs currently assigned to this node.</li>
+<li><strong>Install nftables drop rules</strong>: the following components are added to the node
+   to drop unwanted ARP packets:</li>
+<li>A dedicated nftables table <code>ovn-kubernetes-egressip</code> in the <code>netdev</code>
+     family.</li>
+<li>A chain <code>egressip-drop</code> with an ingress hook on the physical uplink
+     interface (e.g. <code>ens3f0np0</code>), at filter priority.</li>
+<li>For IPv4: a set <code>egressip-v4</code> populated with the assigned egress IPs, and
+     a rule that drops all ARP requests from outside destined towards the EgressIP
+     hosted on this node.</li>
+<li>For IPv6: a set <code>egressip-v6</code> populated with the assigned egress IPs, and
+     a rule that drops all neighbor solicitations from outside destined towards
+     the EgressIP hosted on this node.</li>
+<li><strong>Re-enable GARP drop flows</strong>: adds the aforementioned GARP drop flows to ensure
+   that any stale GARPs from <code>br-int</code> are also dropped during the remaining
+   shutdown window.</li>
+<li><strong>Continue shutdown</strong>: the default node network controller and network manager
+   are stopped, eventually bringing down <code>ovs-vswitchd</code>.</li>
+</ol>
+<p>The nftables rules are installed synchronously and atomically via a single
+nftables transaction, guaranteeing they are active before any subsequent cleanup
+steps remove the egress IP from the bridge or trigger OVN reconvergence.</p>
+<p><strong>Known limitation (status-driven race):</strong> step 1 decides what to block from
+the EgressIP status in the informer cache, but the entities that answer ARP —
+the OVN SNAT flow and the IP on the interface — are removed asynchronously. If
+a reassignment moves the egress IP off this node in status <em>before</em> that
+dataplane cleanup completes (e.g. an EIP re-selection unrelated to this node's
+shutdown), the collected list may omit an egress IP that is still physically
+present, leaving a window where the node keeps responding to ARP.</p>
+<p><strong>Known Limitation 2 (network type):</strong> This solution works for cluster default
+network and user defined networks when primary Egress IPs are used. It doesn't
+address any such issues for secondary Egress IPs.</p>
+<h4 id="startup-cleanup">Startup Cleanup<a class="headerlink" href="#startup-cleanup" title="Permanent link">¶</a></h4>
+<p>On the next startup, NodeControllerManager deletes the entire
+<code>ovn-kubernetes-egressip</code> table. This cleanup runs after the OVN controller has
+synced and stale SNATs have been removed, ensuring the nftables rules are not
+removed before OVN has converged to the correct state.</p>
+<p>For a full node reboot, the kernel automatically clears all nftables state, so
+the cleanup primarily handles container/process restarts where the host kernel
+persists nftables rules across restarts of the ovnkube process.</p>
+<h4 id="ungraceful-shutdown">Ungraceful Shutdown<a class="headerlink" href="#ungraceful-shutdown" title="Permanent link">¶</a></h4>
+<p>In the case of an ungraceful shutdown (OOM kill, <code>SIGKILL</code>, power failure), the
+nftables rules are not installed. However, this is acceptable because in an
+ungraceful shutdown:</p>
 <ul>
-<li><a href="../user-defined-networks/">User Defined Networks</a></li>
-<li><a href="../dynamic-udn/">Dynamic UDN Node Allocation</a></li>
-<li><a href="../../bgp-integration/route-advertisements/">Route Advertisements</a></li>
-<li><a href="../../hardware-offload/dpu-support/">DPU support</a></li>
+<li><code>ovs-vswitchd</code> stops immediately, so OVN logical flows cannot respond to ARP.</li>
+<li>The network interface goes down (or the entire host is unreachable), so the
+  kernel cannot respond either.</li>
 </ul>
+<p>The multiple MAC problem specifically occurs during <strong>graceful</strong> shutdown where
+the host networking stack remains operational for an extended period after the
+egress IP has been reassigned.</p>
+<h4 id="combined-protection">Combined Protection<a class="headerlink" href="#combined-protection" title="Permanent link">¶</a></h4>
+<p>The two solutions work together to cover both directions of the race:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Protection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Startup</strong>: ovn-controller GARPs for stale egress IPs from the Southbound DB</td>
+<td>GARP drop flows on the bridge (Solution 1)</td>
+</tr>
+<tr>
+<td><strong>Shutdown</strong>: old node responds to ARP requests from the new node's GARP broadcast</td>
+<td>nftables netdev ingress drop rules (Solution 2)</td>
+</tr>
+<tr>
+<td><strong>Shutdown</strong>: old node's OVN logical flows generate stale GARPs via <code>br-int</code></td>
+<td>GARP drop flows re-enabled during <code>Stop()</code> (Solution 1, reactivated)</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -5460,10 +4991,10 @@ DPU.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "content.code.annotate", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": ["latest", "master"], "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": ["latest", "master"], "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   
