@@ -48,6 +48,11 @@ const (
 	// ovnStatelessNetPolAnnotationName is an annotation on K8s Network Policy resource to specify that all
 	// the resulting OVN ACLs must be created as stateless
 	ovnStatelessNetPolAnnotationName = "k8s.ovn.org/acl-stateless"
+
+	// networkPolicyPeerAggregationThreshold gates the experimental selector
+	// aggregation path. Small rules retain the existing one-address-set-per-peer
+	// behavior; large selector-only rules are the workload this experiment targets.
+	networkPolicyPeerAggregationThreshold = 32
 )
 
 // defaultDenyPortGroups is a shared object and should be used by only 1 thread at a time
@@ -1052,10 +1057,16 @@ func (bnc *BaseNetworkController) createNetworkPolicy(policy *knet.NetworkPolicy
 				ingress.addPortPolicy(&portJSON)
 			}
 
-			for _, fromJSON := range ingressJSON.From {
-				err := bnc.setupGressPolicy(np, ingress, fromJSON)
-				if err != nil {
+			if canAggregateNetworkPolicyPeers(ingressJSON.From) {
+				if err := bnc.setupAggregateGressPolicy(np, ingress, ingressJSON.From); err != nil {
 					return err
+				}
+			} else {
+				for _, fromJSON := range ingressJSON.From {
+					err := bnc.setupGressPolicy(np, ingress, fromJSON)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -1075,10 +1086,16 @@ func (bnc *BaseNetworkController) createNetworkPolicy(policy *knet.NetworkPolicy
 				egress.addPortPolicy(&portJSON)
 			}
 
-			for _, toJSON := range egressJSON.To {
-				err := bnc.setupGressPolicy(np, egress, toJSON)
-				if err != nil {
+			if canAggregateNetworkPolicyPeers(egressJSON.To) {
+				if err := bnc.setupAggregateGressPolicy(np, egress, egressJSON.To); err != nil {
 					return err
+				}
+			} else {
+				for _, toJSON := range egressJSON.To {
+					err := bnc.setupGressPolicy(np, egress, toJSON)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -1150,6 +1167,32 @@ func (bnc *BaseNetworkController) createNetworkPolicy(policy *knet.NetworkPolicy
 // config.Kubernetes.HostNetworkNamespace will be included with empty NamespaceSelector.
 func useNamespaceAddrSet(peer knet.NetworkPolicyPeer) bool {
 	return peer.NamespaceSelector != nil && peer.PodSelector == nil
+}
+
+func canAggregateNetworkPolicyPeers(peers []knet.NetworkPolicyPeer) bool {
+	if len(peers) < networkPolicyPeerAggregationThreshold {
+		return false
+	}
+	for _, peer := range peers {
+		if peer.IPBlock != nil || peer.PodSelector == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (bnc *BaseNetworkController) setupAggregateGressPolicy(np *networkPolicy, gp *gressPolicy,
+	peers []knet.NetworkPolicyPeer) error {
+	asKey, ipv4as, ipv6as, err := bnc.addressSetManager.EnsureAddressSetForPeers(
+		peers, np.namespace, np.getKeyWithKind(), bnc.controllerName, bnc.GetNetInfo())
+	// Keep the key for cleanup/retry even if address-set creation failed, matching
+	// the behavior of setupGressPolicy.
+	np.peerAddressSets = append(np.peerAddressSets, asKey)
+	if err != nil {
+		return fmt.Errorf("failed to ensure aggregate peer address set %s: %v", asKey, err)
+	}
+	gp.addPeerAddressSets(ipv4as, ipv6as)
+	return nil
 }
 
 func (bnc *BaseNetworkController) setupGressPolicy(np *networkPolicy, gp *gressPolicy,

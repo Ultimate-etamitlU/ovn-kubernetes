@@ -279,6 +279,51 @@ var _ = ginkgo.Describe("OVN podSelectorAddressSet", func() {
 		// expect peer address set only
 		gomega.Eventually(addressSetManager.nbClient).Should(libovsdbtest.HaveData([]libovsdbtest.TestData{peerAS}))
 	})
+	ginkgo.It("aggregates selector peers into one address set", func() {
+		namespace1 := *testing.NewNamespace(namespaceName1)
+		namespace1.Labels = map[string]string{"team": "one"}
+		namespace2 := *testing.NewNamespace(namespaceName2)
+		namespace2.Labels = map[string]string{"team": "two"}
+		pod1 := testing.NewPodWithLabels(namespace1.Name, "pod1", nodeName, ip1, map[string]string{"app": "one"})
+		pod2 := testing.NewPodWithLabels(namespace2.Name, "pod2", nodeName, ip2, map[string]string{"app": "two"})
+		peers := []knet.NetworkPolicyPeer{
+			{
+				PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"app": "one"}},
+				NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"team": "one"}},
+			},
+			{
+				PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"app": "two"}},
+				NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"team": "two"}},
+			},
+		}
+
+		startAddrSetManager(initialDB, []corev1.Namespace{namespace1, namespace2}, []corev1.Pod{*pod1, *pod2})
+
+		addrSetKey, _, _, err := addressSetManager.EnsureAddressSetForPeers(peers, namespace1.Name,
+			"backref1", controllerName, &util.DefaultNetInfo{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		reversedPeers := []knet.NetworkPolicyPeer{peers[1], peers[0]}
+		reversedKey, _, _, err := addressSetManager.EnsureAddressSetForPeers(reversedPeers, namespace1.Name,
+			"backref2", controllerName, &util.DefaultNetInfo{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(reversedKey).To(gomega.Equal(addrSetKey))
+
+		dbIDs, err := GetPeerSelectorAddrSetDbIDs(peers, namespace1.Name, controllerName)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		expectedAS, _ := addressset.GetTestDbAddrSets(dbIDs, []string{ip1, ip2})
+		gomega.Eventually(addressSetManager.nbClient).Should(libovsdbtest.HaveData([]libovsdbtest.TestData{expectedAS}))
+
+		pod3 := testing.NewPodWithLabels(namespace1.Name, "pod3", nodeName, ip3, map[string]string{"app": "one"})
+		_, err = clientSet.KubeClient.CoreV1().Pods(namespace1.Name).Create(context.TODO(), pod3, metav1.CreateOptions{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		expectedAS, _ = addressset.GetTestDbAddrSets(dbIDs, []string{ip1, ip2, ip3})
+		gomega.Eventually(addressSetManager.nbClient).Should(libovsdbtest.HaveData([]libovsdbtest.TestData{expectedAS}))
+
+		err = clientSet.KubeClient.CoreV1().Pods(namespace1.Name).Delete(context.TODO(), pod3.Name, metav1.DeleteOptions{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		expectedAS, _ = addressset.GetTestDbAddrSets(dbIDs, []string{ip1, ip2})
+		gomega.Eventually(addressSetManager.nbClient).Should(libovsdbtest.HaveData([]libovsdbtest.TestData{expectedAS}))
+	})
 	ginkgo.It("creates different address set for multiple users with the same selector depending on legacyNetpolMode", func() {
 		namespace1 := *testing.NewNamespace(namespaceName1)
 		podSelector := &metav1.LabelSelector{

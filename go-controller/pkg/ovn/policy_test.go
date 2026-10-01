@@ -92,6 +92,34 @@ var _ = ginkgo.Describe("network policy scale metrics", func() {
 	})
 })
 
+var _ = ginkgo.Describe("network policy peer aggregation", func() {
+	ginkgo.It("enables aggregation only for large selector-only peer lists", func() {
+		makePeers := func(count int) []knet.NetworkPolicyPeer {
+			peers := make([]knet.NetworkPolicyPeer, count)
+			for i := range peers {
+				peers[i] = knet.NetworkPolicyPeer{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"peer-index": fmt.Sprintf("%d", i),
+					}},
+				}
+			}
+			return peers
+		}
+
+		gomega.Expect(canAggregateNetworkPolicyPeers(makePeers(networkPolicyPeerAggregationThreshold - 1))).To(gomega.BeFalse())
+		gomega.Expect(canAggregateNetworkPolicyPeers(makePeers(networkPolicyPeerAggregationThreshold))).To(gomega.BeTrue())
+
+		withIPBlock := makePeers(networkPolicyPeerAggregationThreshold)
+		withIPBlock[0].IPBlock = &knet.IPBlock{CIDR: "10.0.0.0/8"}
+		gomega.Expect(canAggregateNetworkPolicyPeers(withIPBlock)).To(gomega.BeFalse())
+
+		withNilPodSelector := makePeers(networkPolicyPeerAggregationThreshold)
+		withNilPodSelector[0].PodSelector = nil
+		withNilPodSelector[0].NamespaceSelector = &metav1.LabelSelector{}
+		gomega.Expect(canAggregateNetworkPolicyPeers(withNilPodSelector)).To(gomega.BeFalse())
+	})
+})
+
 // getDefaultDenyData builds namespace-owned port groups, considering the same ports are selected for ingress
 // and egress
 func getDefaultDenyDataHelper(policyTypeIngress, policyTypeEgress bool, params *netpolDataParams) []libovsdbtest.TestData {
@@ -756,6 +784,53 @@ var _ = ginkgo.Describe("OVN NetworkPolicy Operations", func() {
 		updatedSwitchAndPods := getDefaultNetExpectedPodsAndSwitches(tPods, []string{nodeName})
 		return append(getHairpinningACLsV4AndPortGroup(), updatedSwitchAndPods...)
 	}
+
+	ginkgo.It("uses one ACL address-set reference for a large selector-only rule", func() {
+		peers := make([]knet.NetworkPolicyPeer, networkPolicyPeerAggregationThreshold)
+		for i := range peers {
+			peers[i] = knet.NetworkPolicyPeer{
+				PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+					"peer-index": fmt.Sprintf("%d", i),
+				}},
+			}
+		}
+		namespace1 := *ovntest.NewNamespace(namespaceName1)
+		netpol := ovntest.NewTestNetworkPolicy("aggregate-netpol", namespace1.Name, metav1.LabelSelector{},
+			[]knet.NetworkPolicyIngressRule{{From: peers}}, nil)
+
+		startOvn(initialDB, []corev1.Namespace{namespace1}, []knet.NetworkPolicy{*netpol}, nil, nil)
+
+		var policyACL *nbdb.ACL
+		gomega.Eventually(func() error {
+			acls, err := libovsdbops.FindACLsWithPredicate(fakeOvn.nbClient, func(acl *nbdb.ACL) bool {
+				return acl.ExternalIDs[libovsdbops.OwnerTypeKey.String()] == string(libovsdbops.NetworkPolicyOwnerType) &&
+					acl.ExternalIDs[libovsdbops.GressIdxKey.String()] == "0"
+			})
+			if err != nil {
+				return err
+			}
+			if len(acls) != 1 {
+				return fmt.Errorf("expected one NetworkPolicy ACL, got %d", len(acls))
+			}
+			policyACL = acls[0]
+			return nil
+		}).Should(gomega.Succeed())
+		gomega.Expect(strings.Count(policyACL.Match, "$")).To(gomega.Equal(1))
+
+		gomega.Eventually(func() error {
+			addressSets, err := libovsdbops.FindAddressSetsWithPredicate(fakeOvn.nbClient, func(as *nbdb.AddressSet) bool {
+				return as.ExternalIDs[libovsdbops.OwnerControllerKey.String()] == getNetworkControllerName((&util.DefaultNetInfo{}).GetNetworkName()) &&
+					as.ExternalIDs[libovsdbops.OwnerTypeKey.String()] == string(libovsdbops.PodSelectorOwnerType)
+			})
+			if err != nil {
+				return err
+			}
+			if len(addressSets) != 1 {
+				return fmt.Errorf("expected one aggregate PodSelector address set, got %d", len(addressSets))
+			}
+			return nil
+		}).Should(gomega.Succeed())
+	})
 
 	ginkgo.Context("on startup", func() {
 		ginkgo.It("creates default hairpinning ACLs", func() {

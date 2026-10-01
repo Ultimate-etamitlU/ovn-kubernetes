@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
+	knet "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -44,6 +45,11 @@ type podSelectorAddressSet struct {
 
 	podSelector       labels.Selector
 	namespaceSelector labels.Selector
+	// peerSelectors is set for an experimental aggregate address set. Each
+	// selector describes one NetworkPolicy peer and the address set contains
+	// the union of all matching pods. The regular podSelector fields above are
+	// intentionally left unchanged for the existing address-set path.
+	peerSelectors []aggregatePeerSelector
 	// namespace is used when namespaceSelector is nil to set static namespace
 	namespace string
 	// nodeSelector decides which nodes' pods should be added to the address set; nil means all nodes
@@ -68,6 +74,12 @@ type podSelectorAddressSet struct {
 	// and config.Kubernetes.HostNetworkNamespace address set IPs will be included when that namespace is matched and
 	// podSelector is empty.
 	legacyNetpolMode bool
+}
+
+type aggregatePeerSelector struct {
+	podSelector       labels.Selector
+	namespaceSelector labels.Selector
+	namespace         string
 }
 
 const (
@@ -336,18 +348,8 @@ func (m *AddressSetManager) EnsureAddressSet(podSelector, namespaceSelector, nod
 		psAddrSet, found = m.addressSets.Load(key)
 		if !found {
 			addrSetDbIDs := GetPodSelectorAddrSetDbIDs(podSelector, namespaceSelector, nodeSelector, namespace, controllerName, legacyNetpolMode)
-			ipv4Mode, ipv6Mode := netInfo.IPMode()
 			var addrSet addressset.AddressSet
-			switch {
-			case ipv4Mode && !ipv6Mode:
-				addrSet, err = m.addressSetFactoryV4.EnsureAddressSet(addrSetDbIDs)
-			case !ipv4Mode && ipv6Mode:
-				addrSet, err = m.addressSetFactoryV6.EnsureAddressSet(addrSetDbIDs)
-			case ipv4Mode && ipv6Mode:
-				addrSet, err = m.addressSetFactoryDualstack.EnsureAddressSet(addrSetDbIDs)
-			default:
-				return fmt.Errorf("neither IPv4 nor IPv6 mode is enabled")
-			}
+			addrSet, err = m.ensureAddressSet(addrSetDbIDs, netInfo)
 			// if the first step of creating address set fails, return error since there is nothing to cleanup
 			if err != nil {
 				return err
@@ -390,6 +392,75 @@ func (m *AddressSetManager) EnsureAddressSet(podSelector, namespaceSelector, nod
 		}
 	}
 	return
+}
+
+// EnsureAddressSetForPeers creates one address set containing the union of the
+// pods selected by all selector-only NetworkPolicy peers. It is intentionally a
+// separate API from EnsureAddressSet so the existing selector/address-set path
+// remains unchanged for normal policies.
+func (m *AddressSetManager) EnsureAddressSetForPeers(peers []knet.NetworkPolicyPeer, namespace, backRef, controllerName string,
+	netInfo util.NetInfo) (addrSetKey, psAddrSetHashV4, psAddrSetHashV6 string, err error) {
+	peerSelectors, objectName, err := normalizeAggregatePeerSelectors(peers, namespace)
+	if err != nil {
+		return "", "", "", err
+	}
+	addrSetKey = controllerName + "_" + objectName
+	addrSetDbIDs := getPeerSelectorAddrSetDbIDsForName(objectName, controllerName)
+
+	var found bool
+	err = m.addressSets.DoWithLock(addrSetKey, func(key string) error {
+		var psAddrSet *podSelectorAddressSet
+		psAddrSet, found = m.addressSets.Load(key)
+		if !found {
+			addrSet, ensureErr := m.ensureAddressSet(addrSetDbIDs, netInfo)
+			if ensureErr != nil {
+				return ensureErr
+			}
+			psAddrSet = &podSelectorAddressSet{
+				backRefs:       map[string]bool{},
+				peerSelectors:  peerSelectors,
+				addressSet:     addrSet,
+				controllerName: controllerName,
+				netInfo:        netInfo,
+				selectedNamespaces: &selectedNamespaces{
+					set: sets.New[string](),
+					// Until the first reconcile, assume all namespaces are selected
+					// so no pod event can be missed.
+					all: true,
+				},
+			}
+			m.addressSets.LoadOrStore(key, psAddrSet)
+		}
+		psAddrSet.backRefs[backRef] = true
+		psAddrSetHashV4, psAddrSetHashV6 = psAddrSet.addressSet.GetASHashNames()
+		return nil
+	})
+	if err != nil {
+		return
+	}
+	if !found {
+		// Populate the new address set before the caller creates ACLs that refer
+		// to it. Subsequent changes are handled by the existing controllers.
+		if reconcileErr := m.reconcileAddressSet(addrSetKey); reconcileErr != nil {
+			klog.Errorf("Failed to reconcile aggregate address set %s on ensure: %v", addrSetKey, reconcileErr)
+			m.addressSetReconciler.Reconcile(addrSetKey)
+		}
+	}
+	return
+}
+
+func (m *AddressSetManager) ensureAddressSet(dbIDs *libovsdbops.DbObjectIDs, netInfo util.NetInfo) (addressset.AddressSet, error) {
+	ipv4Mode, ipv6Mode := netInfo.IPMode()
+	switch {
+	case ipv4Mode && !ipv6Mode:
+		return m.addressSetFactoryV4.EnsureAddressSet(dbIDs)
+	case !ipv4Mode && ipv6Mode:
+		return m.addressSetFactoryV6.EnsureAddressSet(dbIDs)
+	case ipv4Mode && ipv6Mode:
+		return m.addressSetFactoryDualstack.EnsureAddressSet(dbIDs)
+	default:
+		return nil, fmt.Errorf("neither IPv4 nor IPv6 mode is enabled")
+	}
 }
 
 // CleanupForController destroys all address sets owned by the given controller
@@ -804,7 +875,12 @@ func (m *AddressSetManager) reconcileAddressSet(key string) error {
 			return fmt.Errorf("failed to get selected namespaces for address set %s: %v", key, err)
 		}
 		var pods []*corev1.Pod
-		if matchedNamespaces.all {
+		if len(psAddrSet.peerSelectors) > 0 {
+			pods, err = m.listPodsForAggregatePeerSelectors(psAddrSet.peerSelectors)
+			if err != nil {
+				return fmt.Errorf("failed to list pods for aggregate address set %s: %v", key, err)
+			}
+		} else if matchedNamespaces.all {
 			// no namespace selector, use pod selector only
 			if psAddrSet.podSelector.Empty() {
 				// all cluster pods
@@ -904,15 +980,37 @@ func (m *AddressSetManager) getSelectedNamespaces(s *podSelectorAddressSet) (*se
 	matchedNamespaces := &selectedNamespaces{
 		set: sets.New[string](),
 	}
-	if s.namespace != "" {
+	if len(s.peerSelectors) == 0 {
+		return m.getSelectedNamespacesForSelector(s.namespace, s.namespaceSelector)
+	}
+	for _, peer := range s.peerSelectors {
+		peerNamespaces, err := m.getSelectedNamespacesForSelector(peer.namespace, peer.namespaceSelector)
+		if err != nil {
+			return nil, err
+		}
+		if peerNamespaces.all {
+			matchedNamespaces.all = true
+			matchedNamespaces.set = sets.New[string]()
+			break
+		}
+		matchedNamespaces.set.Insert(peerNamespaces.set.UnsortedList()...)
+	}
+	return matchedNamespaces, nil
+}
+
+func (m *AddressSetManager) getSelectedNamespacesForSelector(namespace string, namespaceSelector labels.Selector) (*selectedNamespaces, error) {
+	matchedNamespaces := &selectedNamespaces{
+		set: sets.New[string](),
+	}
+	if namespace != "" {
 		// static namespace case
-		matchedNamespaces.set.Insert(s.namespace)
-	} else if s.namespaceSelector.Empty() {
+		matchedNamespaces.set.Insert(namespace)
+	} else if namespaceSelector == nil || namespaceSelector.Empty() {
 		// any namespace
 		matchedNamespaces.all = true
 	} else {
 		// selected namespaces
-		namespaces, err := m.namespaceLister.List(s.namespaceSelector)
+		namespaces, err := m.namespaceLister.List(namespaceSelector)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list namespaces: %v", err)
 		}
@@ -921,6 +1019,41 @@ func (m *AddressSetManager) getSelectedNamespaces(s *podSelectorAddressSet) (*se
 		}
 	}
 	return matchedNamespaces, nil
+}
+
+func (m *AddressSetManager) listPodsForAggregatePeerSelectors(peerSelectors []aggregatePeerSelector) ([]*corev1.Pod, error) {
+	podsByKey := make(map[string]*corev1.Pod)
+	for _, peer := range peerSelectors {
+		matchedNamespaces, err := m.getSelectedNamespacesForSelector(peer.namespace, peer.namespaceSelector)
+		if err != nil {
+			return nil, err
+		}
+		if matchedNamespaces.all {
+			pods, err := m.podLister.List(peer.podSelector)
+			if err != nil {
+				return nil, err
+			}
+			for _, pod := range pods {
+				podsByKey[pod.Namespace+"/"+pod.Name] = pod
+			}
+			continue
+		}
+		for namespace := range matchedNamespaces.set {
+			pods, err := m.podLister.Pods(namespace).List(peer.podSelector)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list pods in namespace %s: %v", namespace, err)
+			}
+			for _, pod := range pods {
+				podsByKey[pod.Namespace+"/"+pod.Name] = pod
+			}
+		}
+	}
+
+	pods := make([]*corev1.Pod, 0, len(podsByKey))
+	for _, pod := range podsByKey {
+		pods = append(pods, pod)
+	}
+	return pods, nil
 }
 
 // getSelectedNodes returns the set of node names that match the node selector.
@@ -969,6 +1102,82 @@ func GetPodSelectorAddrSetDbIDs(podSelector, namespaceSelector, nodeSelector *me
 		// pod selector address sets are cluster-scoped, only need name
 		libovsdbops.ObjectNameKey: addrsetKey,
 	})
+}
+
+// GetPeerSelectorAddrSetDbIDs returns the DB IDs for an aggregate address set
+// representing selector-only NetworkPolicy peers. Peer order does not affect
+// the returned ID.
+func GetPeerSelectorAddrSetDbIDs(peers []knet.NetworkPolicyPeer, namespace, controller string) (*libovsdbops.DbObjectIDs, error) {
+	_, objectName, err := normalizeAggregatePeerSelectors(peers, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return getPeerSelectorAddrSetDbIDsForName(objectName, controller), nil
+}
+
+func getPeerSelectorAddrSetDbIDsForName(objectName, controller string) *libovsdbops.DbObjectIDs {
+	return libovsdbops.NewDbObjectIDs(libovsdbops.AddressSetPodSelector, controller, map[libovsdbops.ExternalIDKey]string{
+		libovsdbops.ObjectNameKey: objectName,
+	})
+}
+
+// normalizeAggregatePeerSelectors parses and canonicalizes selector-only
+// peers. NetworkPolicy peer semantics are a union, so duplicate peers can be
+// removed and the remaining order can be made irrelevant for address-set
+// sharing. IPBlocks and nil PodSelectors stay on the regular path because
+// their legacy host-network semantics are not represented by this aggregate.
+func normalizeAggregatePeerSelectors(peers []knet.NetworkPolicyPeer, namespace string) ([]aggregatePeerSelector, string, error) {
+	selectorsByKey := make(map[string]aggregatePeerSelector, len(peers))
+	for i, peer := range peers {
+		if peer.IPBlock != nil {
+			return nil, "", fmt.Errorf("peer %d contains an IPBlock", i)
+		}
+		if peer.PodSelector == nil {
+			return nil, "", fmt.Errorf("peer %d has no PodSelector", i)
+		}
+
+		podSelector, err := metav1.LabelSelectorAsSelector(peer.PodSelector)
+		if err != nil {
+			return nil, "", fmt.Errorf("can't parse pod selector %v: %w", peer.PodSelector, err)
+		}
+
+		var namespaceSelector labels.Selector
+		peerNamespace := namespace
+		namespaceKey := "namespace:" + namespace
+		if peer.NamespaceSelector != nil {
+			namespaceSelector, err = metav1.LabelSelectorAsSelector(peer.NamespaceSelector)
+			if err != nil {
+				return nil, "", fmt.Errorf("can't parse namespace selector %v: %w", peer.NamespaceSelector, err)
+			}
+			peerNamespace = ""
+			namespaceKey = "selector:" + shortLabelSelectorString(peer.NamespaceSelector)
+		} else if namespace == "" {
+			return nil, "", fmt.Errorf("namespace selector is nil and namespace is empty")
+		}
+
+		key := namespaceKey + "|pod:" + shortLabelSelectorString(peer.PodSelector)
+		selectorsByKey[key] = aggregatePeerSelector{
+			podSelector:       podSelector,
+			namespaceSelector: namespaceSelector,
+			namespace:         peerNamespace,
+		}
+	}
+	if len(selectorsByKey) == 0 {
+		return nil, "", fmt.Errorf("no peer selectors supplied")
+	}
+
+	keys := make([]string, 0, len(selectorsByKey))
+	for key := range selectorsByKey {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	peerSelectors := make([]aggregatePeerSelector, 0, len(keys))
+	for _, key := range keys {
+		peerSelectors = append(peerSelectors, selectorsByKey[key])
+	}
+	canonical := strings.Join(keys, "\x00")
+	objectName := "peer-aggregate-" + util.HashForOVN(canonical)
+	return peerSelectors, objectName, nil
 }
 
 // sortedLSRString is based on *LabelSelectorRequirement.String(),
