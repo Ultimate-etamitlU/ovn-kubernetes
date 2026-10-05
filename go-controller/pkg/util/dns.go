@@ -38,6 +38,7 @@ type dnsValue struct {
 	retryCount int
 }
 
+// DNS tracks DNS names, their resolved IP addresses, and refresh times.
 type DNS struct {
 	// Protects dnsMap operations
 	lock sync.Mutex
@@ -50,6 +51,7 @@ type DNS struct {
 	port string
 }
 
+// NewDNS creates a resolver using nameservers from resolverConfigFile.
 func NewDNS(resolverConfigFile string) (*DNS, error) {
 	config, err := dnsOps.ClientConfigFromFile(resolverConfigFile)
 	if err != nil || config == nil {
@@ -63,6 +65,7 @@ func NewDNS(resolverConfigFile string) (*DNS, error) {
 	}, nil
 }
 
+// Size returns the number of DNS names currently tracked by d.
 func (d *DNS) Size() int {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -70,6 +73,7 @@ func (d *DNS) Size() int {
 	return len(d.dnsMap)
 }
 
+// GetIPs returns the currently resolved IP addresses for dns.
 func (d *DNS) GetIPs(dns string) []net.IP {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -82,6 +86,7 @@ func (d *DNS) GetIPs(dns string) []net.IP {
 	return data.ips
 }
 
+// Add begins tracking dns and resolves its initial IP addresses.
 func (d *DNS) Add(dns string) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -94,12 +99,14 @@ func (d *DNS) Add(dns string) error {
 	return err
 }
 
+// Delete stops tracking dns.
 func (d *DNS) Delete(dns string) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	delete(d.dnsMap, dns)
 }
 
+// Update re-resolves dnsName and reports whether its IP set changed.
 func (d *DNS) Update(dnsName string) (bool, error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -146,7 +153,6 @@ func (d *DNS) updateOne(dns string) (bool, error) {
 func (d *DNS) getIPsAndMinTTL(domain string) ([]net.IP, time.Duration, bool, error) {
 	ips := []net.IP{}
 	ttlSet := false
-	var ttlSeconds uint32
 	var minTTL uint32
 	var recordTypes []uint16
 
@@ -157,7 +163,15 @@ func (d *DNS) getIPsAndMinTTL(domain string) ([]net.IP, time.Duration, bool, err
 		recordTypes = append(recordTypes, dns.TypeAAAA)
 	}
 
+	// Some local resolvers cap TTLs. Keep the first positive answer's addresses,
+	// but accept a longer TTL from a later resolver only when its IP set matches;
+	// this avoids combining split DNS views while avoiding refreshes based only
+	// on the local cap.
 	for _, recordType := range recordTypes {
+		var familyIPs []net.IP
+		var familyTTL uint32
+		familyTTLSet := false
+
 		for _, server := range d.nameservers {
 			msg := new(dns.Msg)
 			dnsOps.SetQuestion(msg, dnsOps.Fqdn(domain), recordType)
@@ -173,7 +187,7 @@ func (d *DNS) getIPsAndMinTTL(domain string) ([]net.IP, time.Duration, bool, err
 				klog.Warningf("Failed to query nameserver: %s with address: %s for domain: %s, err: %v", server, dialServer, domain, err)
 				continue
 			}
-			if in.Truncated {
+			if in != nil && in.Truncated {
 				// if it was fall back on TCP
 				c.Net = "tcp"
 				// ensure that the old message is overwritten
@@ -182,36 +196,69 @@ func (d *DNS) getIPsAndMinTTL(domain string) ([]net.IP, time.Duration, bool, err
 				in_TCP, _, err := dnsOps.Exchange(c, msg, dialServer)
 				if err != nil {
 					klog.Warningf("Failed to fall back to TCP to get untruncated DNS results: for domain %s, err: %v", domain, err)
-				} else {
-					in = in_TCP
-
+					continue
 				}
+				in = in_TCP
 			}
-			if in != nil && in.Rcode != dns.RcodeSuccess {
+			if in == nil {
+				continue
+			}
+			if in.Rcode != dns.RcodeSuccess && in.Rcode != dns.RcodeNameError {
 				klog.Warningf("Failed to get a valid answer: %v from nameserver: %s for domain: %s", in.Rcode, server, domain)
 				continue
 			}
 
-			if in != nil && len(in.Answer) > 0 {
-				for _, a := range in.Answer {
-					if !ttlSet || a.Header().Ttl < ttlSeconds {
-						ttlSeconds = a.Header().Ttl
-						ttlSet = true
-						if minTTL == 0 {
-							minTTL = ttlSeconds
-						}
-					}
+			if in.Rcode == dns.RcodeNameError || len(in.Answer) == 0 {
+				if !familyTTLSet {
+					// A negative response from the first resolver defines this
+					// DNS view. Do not use a later resolver's different answer.
+					break
+				}
+				continue
+			}
 
-					switch t := a.(type) {
-					case *dns.A:
-						ips = append(ips, t.A)
-					case *dns.AAAA:
-						ips = append(ips, t.AAAA)
-					}
+			answerIPs := []net.IP{}
+			var answerTTL uint32
+			answerTTLSet := false
+			for _, answer := range in.Answer {
+				if !answerTTLSet || answer.Header().Ttl < answerTTL {
+					answerTTL = answer.Header().Ttl
+					answerTTLSet = true
 				}
-				if ttlSeconds < minTTL {
-					minTTL = ttlSeconds
+
+				switch record := answer.(type) {
+				case *dns.A:
+					answerIPs = append(answerIPs, record.A)
+				case *dns.AAAA:
+					answerIPs = append(answerIPs, record.AAAA)
 				}
+			}
+			if !answerTTLSet {
+				continue
+			}
+			answerIPs = removeDuplicateIPs(answerIPs)
+
+			if !familyTTLSet {
+				familyIPs = answerIPs
+				familyTTL = answerTTL
+				familyTTLSet = true
+				if len(familyIPs) == 0 {
+					break
+				}
+				continue
+			}
+
+			if IsIPsEqual(familyIPs, answerIPs) && answerTTL > familyTTL {
+				familyTTL = answerTTL
+			}
+
+		}
+
+		if familyTTLSet {
+			ips = append(ips, familyIPs...)
+			if !ttlSet || familyTTL < minTTL {
+				minTTL = familyTTL
+				ttlSet = true
 			}
 		}
 	}
@@ -240,6 +287,8 @@ func (d *DNS) getIPsAndMinTTL(domain string) ([]net.IP, time.Duration, bool, err
 	return ips, ttl, false, nil
 }
 
+// GetNextQueryTime returns the earliest refresh time, its DNS name, and
+// whether any DNS names are being tracked.
 func (d *DNS) GetNextQueryTime() (time.Time, string, bool) {
 	d.lock.Lock()
 	defer d.lock.Unlock()

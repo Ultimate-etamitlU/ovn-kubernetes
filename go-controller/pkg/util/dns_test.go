@@ -190,6 +190,204 @@ func TestGetIPsAndMinTTL(t *testing.T) {
 	}
 }
 
+type dnsTestQuery struct {
+	server     string
+	recordType uint16
+}
+
+type dnsTestExchange struct {
+	response *dns.Msg
+	err      error
+}
+
+type dnsTestOps struct {
+	responses map[dnsTestQuery]dnsTestExchange
+	queries   []dnsTestQuery
+}
+
+func (d *dnsTestOps) ClientConfigFromFile(string) (*dns.ClientConfig, error) {
+	return nil, fmt.Errorf("unexpected resolver config read")
+}
+
+func (d *dnsTestOps) Fqdn(name string) string {
+	return dns.Fqdn(name)
+}
+
+func (d *dnsTestOps) Exchange(_ *dns.Client, msg *dns.Msg, server string) (*dns.Msg, time.Duration, error) {
+	if len(msg.Question) != 1 {
+		return nil, 0, fmt.Errorf("expected one DNS question, got %d", len(msg.Question))
+	}
+
+	query := dnsTestQuery{server: server, recordType: msg.Question[0].Qtype}
+	d.queries = append(d.queries, query)
+
+	exchange, ok := d.responses[query]
+	if !ok {
+		return nil, 0, fmt.Errorf("unexpected query to nameserver %q for record type %s", server, dns.TypeToString[query.recordType])
+	}
+	return exchange.response, 0, exchange.err
+}
+
+func (d *dnsTestOps) SetQuestion(msg *dns.Msg, name string, recordType uint16) *dns.Msg {
+	return msg.SetQuestion(name, recordType)
+}
+
+func TestGetIPsAndMinTTLWithMultipleResolvers(t *testing.T) {
+	oldDNSOps := GetDNSLibOps()
+	oldIPv4Mode, oldIPv6Mode := config.IPv4Mode, config.IPv6Mode
+	t.Cleanup(func() {
+		SetDNSLibOpsMockInst(oldDNSOps)
+		config.IPv4Mode, config.IPv6Mode = oldIPv4Mode, oldIPv6Mode
+	})
+
+	firstServer := net.JoinHostPort("192.0.2.1", "53")
+	secondServer := net.JoinHostPort("192.0.2.2", "53")
+	answer := func(records ...dns.RR) *dns.Msg {
+		return &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}, Answer: records}
+	}
+	aRecord := func(ip string, ttl uint32) dns.RR {
+		return &dns.A{
+			Hdr: dns.RR_Header{Name: "www.test.com.", Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: ttl},
+			A:   net.ParseIP(ip),
+		}
+	}
+	aaaaRecord := func(ip string, ttl uint32) dns.RR {
+		return &dns.AAAA{
+			Hdr:  dns.RR_Header{Name: "www.test.com.", Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: ttl},
+			AAAA: net.ParseIP(ip),
+		}
+	}
+
+	tests := []struct {
+		name        string
+		ipv4Mode    bool
+		ipv6Mode    bool
+		responses   map[dnsTestQuery]dnsTestExchange
+		wantQueries []dnsTestQuery
+		wantIPs     []net.IP
+		wantTTL     time.Duration
+		wantRetry   bool
+		wantError   bool
+	}{
+		{
+			name:     "uses upstream TTL when resolver answers match",
+			ipv4Mode: true,
+			responses: map[dnsTestQuery]dnsTestExchange{
+				{server: firstServer, recordType: dns.TypeA}: {
+					response: answer(aRecord("198.51.100.10", 30), aRecord("198.51.100.11", 30)),
+				},
+				{server: secondServer, recordType: dns.TypeA}: {
+					response: answer(aRecord("198.51.100.11", 3600), aRecord("198.51.100.10", 3600)),
+				},
+			},
+			wantQueries: []dnsTestQuery{
+				{server: firstServer, recordType: dns.TypeA},
+				{server: secondServer, recordType: dns.TypeA},
+			},
+			wantIPs: []net.IP{net.ParseIP("198.51.100.10"), net.ParseIP("198.51.100.11")},
+			wantTTL: 3600 * time.Second,
+		},
+		{
+			name:     "keeps first resolver TTL when answer sets differ",
+			ipv4Mode: true,
+			responses: map[dnsTestQuery]dnsTestExchange{
+				{server: firstServer, recordType: dns.TypeA}:  {response: answer(aRecord("198.51.100.10", 30))},
+				{server: secondServer, recordType: dns.TypeA}: {response: answer(aRecord("198.51.100.20", 3600))},
+			},
+			wantQueries: []dnsTestQuery{
+				{server: firstServer, recordType: dns.TypeA},
+				{server: secondServer, recordType: dns.TypeA},
+			},
+			wantIPs: []net.IP{net.ParseIP("198.51.100.10")},
+			wantTTL: 30 * time.Second,
+		},
+		{
+			name:     "falls back after an exchange error",
+			ipv4Mode: true,
+			responses: map[dnsTestQuery]dnsTestExchange{
+				{server: firstServer, recordType: dns.TypeA}:  {err: fmt.Errorf("resolver unavailable")},
+				{server: secondServer, recordType: dns.TypeA}: {response: answer(aRecord("203.0.113.20", 120))},
+			},
+			wantQueries: []dnsTestQuery{
+				{server: firstServer, recordType: dns.TypeA},
+				{server: secondServer, recordType: dns.TypeA},
+			},
+			wantIPs: []net.IP{net.ParseIP("203.0.113.20")},
+			wantTTL: 120 * time.Second,
+		},
+		{
+			name:     "selects resolvers independently for A and AAAA",
+			ipv4Mode: true,
+			ipv6Mode: true,
+			responses: map[dnsTestQuery]dnsTestExchange{
+				{server: firstServer, recordType: dns.TypeA}: {response: answer(aRecord("198.51.100.10", 60))},
+				{server: firstServer, recordType: dns.TypeAAAA}: {
+					response: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeServerFailure}},
+				},
+				{server: secondServer, recordType: dns.TypeA}:    {response: answer(aRecord("198.51.100.10", 3600))},
+				{server: secondServer, recordType: dns.TypeAAAA}: {response: answer(aaaaRecord("2001:db8::20", 120))},
+			},
+			wantQueries: []dnsTestQuery{
+				{server: firstServer, recordType: dns.TypeA},
+				{server: secondServer, recordType: dns.TypeA},
+				{server: firstServer, recordType: dns.TypeAAAA},
+				{server: secondServer, recordType: dns.TypeAAAA},
+			},
+			wantIPs: []net.IP{net.ParseIP("198.51.100.10"), net.ParseIP("2001:db8::20")},
+			wantTTL: 120 * time.Second,
+		},
+		{
+			name:     "does not fall back after NXDOMAIN",
+			ipv4Mode: true,
+			responses: map[dnsTestQuery]dnsTestExchange{
+				{server: firstServer, recordType: dns.TypeA}: {
+					response: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeNameError}},
+				},
+				{server: secondServer, recordType: dns.TypeA}: {response: answer(aRecord("203.0.113.20", 120))},
+			},
+			wantQueries: []dnsTestQuery{{server: firstServer, recordType: dns.TypeA}},
+			wantTTL:     defaultMinTTL,
+			wantRetry:   true,
+			wantError:   true,
+		},
+		{
+			name:     "does not fall back after a NODATA response",
+			ipv4Mode: true,
+			responses: map[dnsTestQuery]dnsTestExchange{
+				{server: firstServer, recordType: dns.TypeA}: {
+					response: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}},
+				},
+				{server: secondServer, recordType: dns.TypeA}: {response: answer(aRecord("203.0.113.20", 120))},
+			},
+			wantQueries: []dnsTestQuery{{server: firstServer, recordType: dns.TypeA}},
+			wantTTL:     defaultMinTTL,
+			wantRetry:   true,
+			wantError:   true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			config.IPv4Mode, config.IPv6Mode = tc.ipv4Mode, tc.ipv6Mode
+			dnsOps := &dnsTestOps{responses: tc.responses}
+			SetDNSLibOpsMockInst(dnsOps)
+
+			resolver := DNS{nameservers: []string{"192.0.2.1", "192.0.2.2"}, port: "53"}
+			ips, ttl, retry, err := resolver.getIPsAndMinTTL("www.test.com")
+
+			if tc.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tc.wantQueries, dnsOps.queries)
+			assert.Equal(t, tc.wantIPs, ips)
+			assert.Equal(t, tc.wantTTL, ttl)
+			assert.Equal(t, tc.wantRetry, retry)
+		})
+	}
+}
+
 func TestUpdate(t *testing.T) {
 	config.IPv4Mode = true
 	mockDNSOps := new(util_mocks.DNSOps)
