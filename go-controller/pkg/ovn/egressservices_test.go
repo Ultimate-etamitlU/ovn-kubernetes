@@ -1497,6 +1497,7 @@ func getDefaultNoReroutePolicies(controllerName string) []*nbdb.LogicalRouterPol
 			Options:     map[string]string{"pkt_mark": ovntypes.EgressIPNodeConnectionMark},
 		},
 		getNoReRouteReplyTrafficPolicy(ovntypes.DefaultNetworkName, controllerName),
+		getNoReRouteMulticastPolicy(ovntypes.DefaultNetworkName, controllerName, "10.128.0.0/16"),
 	)
 
 	v4Pod2PodExtIDs := getEgressIPLRPNoReRoutePodToPodDbIDs(IPFamilyValueV4, ovntypes.DefaultNetworkName, controllerName).GetExternalIDs()
@@ -1532,6 +1533,13 @@ func getDefaultNoReroutePolicies(controllerName string) []*nbdb.LogicalRouterPol
 			Action:      nbdb.LogicalRouterPolicyActionAllow,
 			ExternalIDs: v6Pod2JoinExtIDs,
 			UUID:        "no-reroute-v6-service-UUID",
+		},
+		&nbdb.LogicalRouterPolicy{
+			Priority:    ovntypes.DefaultNoRereoutePriority,
+			Match:       "ip6.src == fe00::/16 && ip6.dst == ff00::/8",
+			Action:      nbdb.LogicalRouterPolicyActionAllow,
+			ExternalIDs: getEgressIPLRPNoReRoutePodToMulticastDbIDs(IPFamilyValueV6, ovntypes.DefaultNetworkName, controllerName).GetExternalIDs(),
+			UUID:        "no-reroute-v6-multicast-UUID",
 		},
 	)
 

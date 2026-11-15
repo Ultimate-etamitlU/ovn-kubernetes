@@ -74,6 +74,7 @@ const (
 	NoReRoutePodToJoin      egressIPNoReroutePolicyName = "EIP-No-Reroute-Pod-To-Join"
 	NoReRoutePodToNode      egressIPNoReroutePolicyName = "EIP-No-Reroute-Pod-To-Node"
 	NoReRouteUDNPodToCDNSvc egressIPNoReroutePolicyName = "EIP-No-Reroute-Pod-To-CDN-Svc"
+	NoReRoutePodToMulticast egressIPNoReroutePolicyName = "EIP-No-Reroute-Pod-To-Multicast"
 	ReplyTrafficMark        egressIPQoSRuleName         = "EgressIP-Mark-Reply-Traffic"
 	dbIDEIPNamePodDivider                               = "_"
 )
@@ -131,6 +132,15 @@ func getEgressIPLRPNoReRoutePodToNodeDbIDs(ipFamily egressIPFamilyValue, network
 		libovsdbops.PriorityKey:   fmt.Sprintf("%d", types.DefaultNoRereoutePriority),
 		libovsdbops.IPFamilyKey:   string(ipFamily),
 		libovsdbops.NetworkKey:    network,
+	})
+}
+
+func getEgressIPLRPNoReRoutePodToMulticastDbIDs(ipFamily egressIPFamilyValue, network, controller string) *libovsdbops.DbObjectIDs {
+	return libovsdbops.NewDbObjectIDs(libovsdbops.LogicalRouterPolicyEgressIP, controller, map[libovsdbops.ExternalIDKey]string{
+		libovsdbops.ObjectNameKey: string(NoReRoutePodToMulticast),
+		libovsdbops.PriorityKey:  fmt.Sprintf("%d", types.DefaultNoRereoutePriority),
+		libovsdbops.IPFamilyKey:  string(ipFamily),
+		libovsdbops.NetworkKey:   network,
 	})
 }
 
@@ -2651,6 +2661,9 @@ func InitClusterEgressPolicies(nbClient libovsdbclient.Client, addressSetFactory
 	if err = createDefaultNoRerouteReplyTrafficPolicy(nbClient, ni.GetNetworkName(), controllerName, routerName); err != nil {
 		return fmt.Errorf("failed to create no reroute reply traffic policy for network %s: %v", ni.GetNetworkName(), err)
 	}
+	if err = createDefaultNoRerouteMulticastPolicies(nbClient, ni.GetNetworkName(), controllerName, routerName, v4ClusterSubnet, v6ClusterSubnet); err != nil {
+		return fmt.Errorf("failed to create no reroute policies for multicast on network %s: %v", ni.GetNetworkName(), err)
+	}
 
 	// ensure the address-set for storing nodeIPs exists
 	// The address set with controller name 'default' is shared with all networks
@@ -3819,6 +3832,27 @@ func createDefaultNoReroutePodPolicies(nbClient libovsdbclient.Client, network, 
 	return nil
 }
 
+// createDefaultNoRerouteMulticastPolicies ensures multicast traffic from egress IP pods
+// is not rerouted through the EgressIP path. Multicast (224.0.0.0/4 for IPv4, ff00::/8
+// for IPv6) is relayed via OVN's mcast_relay and should never be SNAT'd to an EgressIP.
+func createDefaultNoRerouteMulticastPolicies(nbClient libovsdbclient.Client, network, controller, routerName string, v4ClusterSubnet, v6ClusterSubnet []*net.IPNet) error {
+	for _, v4Subnet := range v4ClusterSubnet {
+		match := fmt.Sprintf("ip4.src == %s && ip4.dst == 224.0.0.0/4", v4Subnet.String())
+		dbIDs := getEgressIPLRPNoReRoutePodToMulticastDbIDs(IPFamilyValueV4, network, controller)
+		if err := createEgressIPLogicalRouterPolicy(nbClient, routerName, match, types.DefaultNoRereoutePriority, nil, dbIDs); err != nil {
+			return fmt.Errorf("unable to create IPv4 no-reroute multicast policies, err: %v", err)
+		}
+	}
+	for _, v6Subnet := range v6ClusterSubnet {
+		match := fmt.Sprintf("ip6.src == %s && ip6.dst == ff00::/8", v6Subnet.String())
+		dbIDs := getEgressIPLRPNoReRoutePodToMulticastDbIDs(IPFamilyValueV6, network, controller)
+		if err := createEgressIPLogicalRouterPolicy(nbClient, routerName, match, types.DefaultNoRereoutePriority, nil, dbIDs); err != nil {
+			return fmt.Errorf("unable to create IPv6 no-reroute multicast policies, err: %v", err)
+		}
+	}
+	return nil
+}
+
 // createDefaultReRouteQoSRule builds QoS rule ops to be created on every node's switch that let's us
 // mark packets that are tracked in conntrack and replies emerging from the pod.
 // This mark is then matched on the reroute policies to determine if its a reply packet
@@ -4172,7 +4206,7 @@ func createEgressIPLogicalRouterPolicy(nbClient libovsdbclient.Client, clusterRo
 	}
 	// if multiple cluster subnets, we will retrieve multiple LRPs if using a predicate generated from DB IDs alone,
 	// therefore filter by match and options also only for pod to pod and pod to join LRPs.
-	if objectType == string(NoReRoutePodToJoin) || objectType == string(NoReRoutePodToPod) {
+	if objectType == string(NoReRoutePodToJoin) || objectType == string(NoReRoutePodToPod) || objectType == string(NoReRoutePodToMulticast) {
 		p = libovsdbops.GetPredicate[*nbdb.LogicalRouterPolicy](dbIDs, func(item *nbdb.LogicalRouterPolicy) bool {
 			return item.Match == match
 		})
