@@ -84,6 +84,12 @@ func initClusterEgressPoliciesOps(nbClient libovsdbclient.Client, addressSetFact
 		return ops, fmt.Errorf("failed to create no reroute reply traffic policy for network %s: %v", ni.GetNetworkName(), err)
 	}
 
+	// Create multicast no-reroute policies (batched)
+	ops, err = createDefaultNoRerouteMulticastPoliciesOps(nbClient, ni.GetNetworkName(), controllerName, routerName, v4ClusterSubnet, v6ClusterSubnet, ops)
+	if err != nil {
+		return ops, fmt.Errorf("failed to create no reroute policies for multicast on network %s: %v", ni.GetNetworkName(), err)
+	}
+
 	// ensure the address-set for storing nodeIPs exists
 	// The address set with controller name 'default' is shared with all networks
 	if clusterNodeIPsAddrSetDbIDs == nil {
@@ -238,6 +244,51 @@ func createDefaultNoRerouteReplyTrafficPolicyOps(nbClient libovsdbclient.Client,
 	// Use predicate generator based on dbIDs to match the original implementation
 	p := libovsdbops.GetPredicate[*nbdb.LogicalRouterPolicy](dbIDs, nil)
 	return libovsdbops.CreateOrUpdateLogicalRouterPolicyWithPredicateOps(nbClient, ops, routerName, &lrp, p)
+}
+
+// createDefaultNoRerouteMulticastPoliciesOps is the ops-building version of createDefaultNoRerouteMulticastPolicies
+func createDefaultNoRerouteMulticastPoliciesOps(nbClient libovsdbclient.Client, network, controller, routerName string,
+	v4ClusterSubnet, v6ClusterSubnet []*net.IPNet, ops []ovsdb.Operation) ([]ovsdb.Operation, error) {
+
+	for _, v4Subnet := range v4ClusterSubnet {
+		match := fmt.Sprintf("ip4.src == %s && ip4.dst == 224.0.0.0/4", v4Subnet.String())
+		dbIDs := getEgressIPLRPNoReRoutePodToMulticastDbIDs(IPFamilyValueV4, network, controller)
+		lrp := nbdb.LogicalRouterPolicy{
+			Priority:    types.DefaultNoRereoutePriority,
+			Action:      nbdb.LogicalRouterPolicyActionAllow,
+			Match:       match,
+			ExternalIDs: dbIDs.GetExternalIDs(),
+		}
+		p := libovsdbops.GetPredicate[*nbdb.LogicalRouterPolicy](dbIDs, func(item *nbdb.LogicalRouterPolicy) bool {
+			return item.Match == match
+		})
+		var err error
+		ops, err = libovsdbops.CreateOrUpdateLogicalRouterPolicyWithPredicateOps(nbClient, ops, routerName, &lrp, p)
+		if err != nil {
+			return ops, fmt.Errorf("failed to create multicast no-reroute policy ops for %s: %v", v4Subnet, err)
+		}
+	}
+
+	for _, v6Subnet := range v6ClusterSubnet {
+		match := fmt.Sprintf("ip6.src == %s && ip6.dst == ff00::/8", v6Subnet.String())
+		dbIDs := getEgressIPLRPNoReRoutePodToMulticastDbIDs(IPFamilyValueV6, network, controller)
+		lrp := nbdb.LogicalRouterPolicy{
+			Priority:    types.DefaultNoRereoutePriority,
+			Action:      nbdb.LogicalRouterPolicyActionAllow,
+			Match:       match,
+			ExternalIDs: dbIDs.GetExternalIDs(),
+		}
+		p := libovsdbops.GetPredicate[*nbdb.LogicalRouterPolicy](dbIDs, func(item *nbdb.LogicalRouterPolicy) bool {
+			return item.Match == match
+		})
+		var err error
+		ops, err = libovsdbops.CreateOrUpdateLogicalRouterPolicyWithPredicateOps(nbClient, ops, routerName, &lrp, p)
+		if err != nil {
+			return ops, fmt.Errorf("failed to create multicast no-reroute policy ops for %s: %v", v6Subnet, err)
+		}
+	}
+
+	return ops, nil
 }
 
 // ensureDefaultNoRerouteUDNEnabledSvcPoliciesOps is the ops-building version of ensureDefaultNoRerouteUDNEnabledSvcPolicies
